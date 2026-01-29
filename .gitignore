@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.env
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+.env.local
+.env*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated files
+*.stl
+output/
+generations/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime
+*.pid
+.morphostruct-pids
+
+# Project-specific exclusions
+.omc/
+.claude/settings.local.json
+concept.png
+control.png
+*.docx
+*.save
+SETTINGS_PAGE_TEST_RESULTS.md
+PARAMETER_CONTROLS_SUMMARY.md
+
+# Root-level standalone scripts (not part of web app)
+/scaffold_*.py
+/generate_*.py
+/interactive_*.py
+/lobule/
