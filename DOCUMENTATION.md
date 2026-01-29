@@ -286,11 +286,6 @@ MorphoStruct/
 │       ├── parameterMeta.ts       # Parameter definitions for UI
 │       └── utils.ts               # Utility functions
 │
-├── lobule/                        # Specialized hepatic lobule module
-│   ├── hepatic_lobule.py          # Interactive Trame UI generator
-│   ├── helpers.py                 # Geometry utilities
-│   └── generations/               # Output directory
-│
 ├── *.stl                          # Generated scaffold files
 └── output/                        # Historical generation output
 ```
