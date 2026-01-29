@@ -67,3 +67,4 @@ PARAMETER_CONTROLS_SUMMARY.md
 /generate_*.py
 /interactive_*.py
 /lobule/
+.claude/
