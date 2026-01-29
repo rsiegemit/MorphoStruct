@@ -196,7 +196,8 @@ python backend/run.py
 
 ```
 MorphoStruct/
-├── README.md                      # This file
+├── README.md                      # Project overview
+├── DOCUMENTATION.md               # This file - detailed docs
 ├── morphostruct.sh                # Unified launcher script
 │
 ├── backend/                       # Python FastAPI server
@@ -286,8 +287,7 @@ MorphoStruct/
 │       ├── parameterMeta.ts       # Parameter definitions for UI
 │       └── utils.ts               # Utility functions
 │
-├── *.stl                          # Generated scaffold files
-└── output/                        # Historical generation output
+└── logo.svg                       # Project logo
 ```
 
 ---
