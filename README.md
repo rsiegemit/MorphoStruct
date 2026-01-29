@@ -6,7 +6,9 @@
 
 **MorphoStruct** is an AI-powered scaffold design platform for bioprinting and tissue engineering research. It provides computational tools for generating anatomically-informed 3D scaffold geometries optimized for cell seeding, nutrient diffusion, and mechanical properties.
 
-<!-- ![Screenshot](screenshot.png) -->
+<p align="center">
+  <img src="logo.svg" alt="MorphoStruct Logo" width="150" height="150">
+</p>
 
 ## Overview
 
