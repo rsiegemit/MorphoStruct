@@ -20,14 +20,14 @@ The AI assistant generates the geometry, you preview it in real-time 3D, adjust 
 
 ## Scaffold Library
 
-**38 tissue-specific scaffolds** + **27 geometric primitives** across 9 categories:
+**39 tissue-specific scaffolds** + **27 geometric primitives** across 9 categories:
 
 | Category | Count | Scaffolds |
 |----------|-------|-----------|
 | **Primitives** | 27 | Cylinder, Sphere, Box, Cone, Torus, Capsule, Pyramid, Wedge, Prism, Tube, Ellipsoid, Hemisphere, Fillet, Chamfer, Slot, Counterbore, Countersink, Boss, Rib, Branch, Bifurcation, Pore, Channel, Fiber, Membrane, Lattice Cell, Pore Array |
 | **Skeletal** | 7 | Trabecular Bone, Osteochondral Interface, Articular Cartilage, Meniscus, Tendon-Ligament, Intervertebral Disc, Haversian Bone |
 | **Organ** | 6 | Hepatic Lobule, Cardiac Patch, Kidney Tubule, Lung Alveoli, Pancreatic Islet, Liver Sinusoid |
-| **Tubular** | 5 | Blood Vessel, Nerve Conduit, Spinal Cord, Bladder, Trachea |
+| **Tubular** | 6 | Blood Vessel, Nerve Conduit, Spinal Cord, Bladder, Trachea, Vascular Perfusion Dish |
 | **Soft Tissue** | 4 | Multilayer Skin, Skeletal Muscle, Cornea, Adipose |
 | **Vascular** | 3 | Vascular Network, Porous Disc, Tubular Conduit |
 | **Dental** | 3 | Dentin-Pulp, Ear Auricle, Nasal Septum |
@@ -154,7 +154,7 @@ MorphoStruct/
 │       │   ├── skeletal/        # Bone & cartilage (7)
 │       │   ├── organ/           # Organ-specific (6)
 │       │   ├── soft_tissue/     # Skin, muscle (4)
-│       │   ├── tubular/         # Vessels, conduits (5)
+│       │   ├── tubular/         # Vessels, conduits (6)
 │       │   ├── dental/          # Dental scaffolds (3)
 │       │   ├── lattice/         # TPMS & strut lattices (5)
 │       │   └── microfluidic/    # Organ-on-chip (3)

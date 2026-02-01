@@ -6,7 +6,7 @@
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-0.160-orange.svg)](https://threejs.org/)
 
-MorphoStruct is a comprehensive **bioprinting scaffold generator** that combines sophisticated 3D geometry algorithms with an intuitive web interface. Generate complex tissue-engineering scaffolds across 43 different types using an AI-assisted design workflow powered by LLM integration (Anthropic Claude or OpenAI).
+MorphoStruct is a comprehensive **bioprinting scaffold generator** that combines sophisticated 3D geometry algorithms with an intuitive web interface. Generate complex tissue-engineering scaffolds across 39 different types using an AI-assisted design workflow powered by LLM integration (Anthropic Claude or OpenAI).
 
 ## Table of Contents
 
@@ -87,12 +87,12 @@ MorphoStruct is designed for tissue engineers, researchers, and bioprinting prof
 
 ### Core Features
 
-- **43 Scaffold Types** across 8 categories:
+- **39 Scaffold Types** across 8 categories:
   - Original scaffolds (5): vascular, porous disc, tubular, lattice, primitives
   - Skeletal structures (7): trabecular bone, osteochondral, cartilage, etc.
   - Organ tissues (6): hepatic lobule, cardiac patch, kidney tubule, etc.
   - Soft tissues (4): skin, muscle, cornea, adipose
-  - Tubular structures (5): blood vessel, nerve conduit, spinal cord, etc.
+  - Tubular structures (6): blood vessel, nerve conduit, spinal cord, bladder, trachea, vascular perfusion dish
   - Dental structures (3): dentin-pulp, ear auricle, nasal septum
   - Advanced lattices (5): gyroid, Schwarz P, octet truss, Voronoi, honeycomb
   - Microfluidic devices (3): organ-on-chip, gradient, perfusable network
