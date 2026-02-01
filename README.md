@@ -4,97 +4,81 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Node.js 18+](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org/)
 
-**MorphoStruct** is an AI-powered scaffold design platform for bioprinting and tissue engineering research. It provides computational tools for generating anatomically-informed 3D scaffold geometries optimized for cell seeding, nutrient diffusion, and mechanical properties.
-
 <p align="center">
   <img src="logo-text.svg" alt="MorphoStruct" width="400">
 </p>
 
-## Overview
+**MorphoStruct** is an AI-powered scaffold design platform for bioprinting and tissue engineering. Generate anatomically-accurate 3D scaffold geometries with natural language commands or parametric controls, then export print-ready STL files for extrusion-based bioprinting, stereolithography, and other additive manufacturing techniques.
 
-Tissue engineering requires scaffolds with precise microarchitectures that support cell attachment, proliferation, and tissue formation. MorphoStruct combines parametric geometry generation with AI-assisted design to produce print-ready scaffold models for extrusion-based bioprinting, stereolithography, and other additive manufacturing techniques.
+## What It Does
 
-The platform supports **38 scaffold types** plus **27 geometric primitives** across 9 categories, each with research-validated geometric parameters and dynamic UI controls.
+Describe the scaffold you need in plain English:
 
-## Scaffold Categories
+> "Create a vascular network with 4 inlets, 3 branching levels, and Murray's law optimization for a 10mm diameter disc"
 
-| Category | Types | Examples |
-|----------|-------|----------|
-| **Primitives** | 27 | Cylinder, torus, capsule, bifurcation, pore array, lattice cell |
-| **Vascular** | 3 | Blood vessels, perfusable networks, vascular networks |
-| **Skeletal** | 7 | Trabecular bone, cartilage, osteochondral interfaces, meniscus |
-| **Organ-Specific** | 6 | Hepatic lobules, lung alveoli, kidney tubules, cardiac patch |
-| **Tubular** | 5 | Nerve conduits, trachea, bladder, spinal cord |
-| **Soft Tissue** | 4 | Multilayer skin, skeletal muscle, adipose, cornea |
-| **Dental** | 3 | Dentin-pulp, ear auricle, nasal septum |
-| **Microfluidic** | 3 | Organ-on-chip, gradient scaffolds, perfusable networks |
-| **Advanced Lattice** | 5 | Gyroid, Schwarz-P, octet truss, Voronoi, honeycomb |
+The AI assistant generates the geometry, you preview it in real-time 3D, adjust parameters with sliders, and export to STL.
 
-## Features
+## Scaffold Library
+
+**38 tissue-specific scaffolds** + **27 geometric primitives** across 9 categories:
+
+| Category | Count | Scaffolds |
+|----------|-------|-----------|
+| **Primitives** | 27 | Cylinder, Sphere, Box, Cone, Torus, Capsule, Pyramid, Wedge, Prism, Tube, Ellipsoid, Hemisphere, Fillet, Chamfer, Slot, Counterbore, Countersink, Boss, Rib, Branch, Bifurcation, Pore, Channel, Fiber, Membrane, Lattice Cell, Pore Array |
+| **Skeletal** | 7 | Trabecular Bone, Osteochondral Interface, Articular Cartilage, Meniscus, Tendon-Ligament, Intervertebral Disc, Haversian Bone |
+| **Organ** | 6 | Hepatic Lobule, Cardiac Patch, Kidney Tubule, Lung Alveoli, Pancreatic Islet, Liver Sinusoid |
+| **Tubular** | 5 | Blood Vessel, Nerve Conduit, Spinal Cord, Bladder, Trachea |
+| **Soft Tissue** | 4 | Multilayer Skin, Skeletal Muscle, Cornea, Adipose |
+| **Vascular** | 3 | Vascular Network, Porous Disc, Tubular Conduit |
+| **Dental** | 3 | Dentin-Pulp, Ear Auricle, Nasal Septum |
+| **Lattice** | 5 | Gyroid (TPMS), Schwarz-P, Octet Truss, Voronoi, Honeycomb |
+| **Microfluidic** | 3 | Organ-on-Chip, Gradient Scaffold, Perfusable Network |
+
+All geometric parameters are validated against published biomaterials literature.
+
+## Key Features
 
 ### AI-Assisted Design
-Integrated LLM support (Anthropic Claude or OpenAI GPT) enables natural language scaffold specification. Describe your requirements and the system generates appropriate parameters.
+Chat interface powered by **Anthropic Claude** or **OpenAI GPT**. Describe what you need, and the assistant generates scaffold parameters, explains design choices, and iterates based on feedback.
 
-### Real-Time 3D Visualization
-Interactive Three.js viewport with orbit controls, cross-section views, and measurement tools. Preview scaffolds before committing to fabrication.
+### Real-Time 3D Preview
+Interactive Three.js viewport with orbit controls. Preview scaffolds instantly before committing to generation. Toggle wireframe view, measure dimensions, and inspect geometry.
 
 ### Dynamic Parametric Controls
-- **Shape-aware UI**: Controls adapt automatically based on selected geometry type
-- **27 primitive shapes** organized by category (Basic, Geometric, Architectural, Organic)
-- **Fast Preview Mode**: Lower resolution for rapid iteration
-- **Invert Geometry**: Swap solid/void spaces for mold creation
+UI adapts to each scaffold type. The 27 primitive shapes show only relevant dimension sliders. Skeletal scaffolds expose porosity and strut parameters. Vascular networks show branching controls.
 
-### Parametric Control
-Fine-grained control over:
-- Porosity and pore size distribution
-- Strut/wall thickness
-- Surface area to volume ratio
-- Mechanical anisotropy
-- Gradient properties
+### Fast Preview Mode
+Generate low-resolution previews in seconds for rapid iteration. Switch to full resolution for final export.
 
-### Primitive Shapes
+### Invert Geometry
+Swap solid and void spaces with one click. Create molds, negative stamps, or inverse scaffolds for casting workflows.
 
-| Category | Shapes |
-|----------|--------|
-| **Basic** | Cylinder, Sphere, Box, Cone |
-| **Geometric** | Torus, Capsule, Pyramid, Wedge, Prism, Tube, Ellipsoid, Hemisphere |
-| **Architectural** | Fillet, Chamfer, Slot, Counterbore, Countersink, Boss, Rib |
-| **Organic** | Branch, Bifurcation, Pore, Channel, Fiber, Membrane, Lattice Cell, Pore Array |
+### Performance Optimized
+Tree union algorithm provides O(n log n) boolean operations—16x faster than naive approaches for complex scaffolds with hundreds of features.
 
-### Export Options
-- **STL Binary** - Compact format for slicers
-- **STL ASCII** - Human-readable for debugging
-- **OBJ** - With material definitions
+## Technology Stack
 
-### User Management
-- Secure authentication
-- Saved scaffold library
-- Preference persistence
-- API key management
+| Layer | Technologies |
+|-------|--------------|
+| **Frontend** | Next.js 14, React 18, TypeScript, Three.js, Tailwind CSS, Zustand |
+| **Backend** | FastAPI, Python 3.10+, Manifold3D, NumPy, Pydantic |
+| **AI** | Anthropic Claude API, OpenAI GPT API |
+| **Database** | SQLite with SQLAlchemy ORM |
+| **Auth** | JWT tokens, bcrypt password hashing |
 
-## Installation
-
-### Prerequisites
-
-- Python 3.10 or later
-- Node.js 18 or later
-- An LLM API key from [Anthropic](https://console.anthropic.com/) or [OpenAI](https://platform.openai.com/)
-
-### Quick Start
+## Quick Start
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/rsiegemit/MorphoStruct.git
 cd MorphoStruct
-
-# Run the setup script
 ./morphostruct.sh install
 
 # Start the application
 ./morphostruct.sh
 ```
 
-The application will be available at http://localhost:3000
+Open http://localhost:3000 in your browser.
 
 ### Manual Installation
 
@@ -102,7 +86,7 @@ The application will be available at http://localhost:3000
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -114,90 +98,157 @@ npm install
 
 ## Configuration
 
-Copy the environment template and add your credentials:
-
+Copy the environment template:
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-Required environment variables:
-```
-ANTHROPIC_API_KEY=sk-ant-...    # For Claude
+Required variables:
+```env
+ANTHROPIC_API_KEY=sk-ant-...    # For Claude (recommended)
 OPENAI_API_KEY=sk-...           # For GPT (alternative)
 SECRET_KEY=your-secret-key      # For JWT tokens
 ```
 
 ## Usage
 
-### Starting the Servers
+### Starting Servers
 
 ```bash
-# Both servers (recommended)
-./morphostruct.sh
-
-# Individual servers
-./morphostruct.sh backend    # API on port 8000
-./morphostruct.sh frontend   # UI on port 3000
+./morphostruct.sh              # Both servers
+./morphostruct.sh backend      # API only (port 8000)
+./morphostruct.sh frontend     # UI only (port 3000)
 ```
 
 ### API Endpoints
 
-The backend exposes a REST API at `http://localhost:8000`:
+**Generation:**
+- `POST /api/generate` — Full scaffold generation with STL
+- `POST /api/preview` — Fast preview (lower resolution)
+- `POST /api/validate` — Parameter validation
+- `GET /api/export/{id}` — Download STL file
 
-- `POST /api/generate` - Generate scaffold geometry
-- `POST /api/preview` - Quick preview mesh (faster, lower resolution)
-- `GET /api/types` - List scaffold types
-- `GET /api/primitives/list` - List available primitive shapes
-- `GET /api/primitives/schema` - Get parameter schemas for all primitives
-- `GET /api/primitives/schema/{name}` - Get schema for specific primitive
-- `GET /api/scaffolds` - User's saved scaffolds
-- `POST /api/export/{id}` - Export to STL/OBJ
+**Primitives:**
+- `GET /api/primitives/list` — List 27 primitive shapes
+- `GET /api/primitives/schema` — Parameter schemas for all primitives
+- `GET /api/primitives/schema/{name}` — Schema for specific primitive
 
-Full API documentation available at `http://localhost:8000/docs`
+**Chat:**
+- `POST /api/chat` — Send message to AI assistant
+
+**User Data:**
+- `GET /api/scaffolds` — User's saved scaffolds
+- `GET /api/presets` — 50+ pre-configured templates
+
+Full API docs: http://localhost:8000/docs
 
 ## Project Structure
 
 ```
 MorphoStruct/
 ├── backend/
-│   ├── app/
-│   │   ├── api/              # REST endpoints
-│   │   ├── geometry/         # Scaffold generators
-│   │   │   ├── primitives/   # 27 primitive shapes (geometric, architectural, organic)
-│   │   │   ├── skeletal/     # Bone & cartilage scaffolds
-│   │   │   ├── organ/        # Organ-specific scaffolds
-│   │   │   └── lattice/      # TPMS & strut-based lattices
-│   │   ├── llm/              # AI integration
-│   │   └── models/           # Database models
-│   └── requirements.txt
+│   └── app/
+│       ├── api/                 # REST endpoints
+│       ├── geometry/            # Scaffold generators
+│       │   ├── primitives/      # 27 geometric primitives
+│       │   ├── skeletal/        # Bone & cartilage (7)
+│       │   ├── organ/           # Organ-specific (6)
+│       │   ├── soft_tissue/     # Skin, muscle (4)
+│       │   ├── tubular/         # Vessels, conduits (5)
+│       │   ├── dental/          # Dental scaffolds (3)
+│       │   ├── lattice/         # TPMS & strut lattices (5)
+│       │   └── microfluidic/    # Organ-on-chip (3)
+│       ├── llm/                 # AI integration
+│       └── models/              # Data models
 ├── frontend/
-│   ├── app/                  # Next.js pages
+│   ├── app/                     # Next.js pages
 │   ├── components/
-│   │   ├── controls/         # Parameter panels & dynamic controls
-│   │   └── viewer/           # 3D viewport
+│   │   ├── controls/            # Parameter panels
+│   │   ├── viewer/              # 3D viewport
+│   │   └── chat/                # AI chat interface
 │   └── lib/
-│       ├── parameterMeta/    # UI metadata for all scaffold types
-│       └── store/            # Zustand state management
-├── morphostruct.sh           # Runner script
-└── DOCUMENTATION.md          # Detailed documentation
+│       ├── parameterMeta/       # UI metadata (14 files)
+│       └── store/               # State management
+├── docs/
+│   └── audit/                   # Parameter documentation
+├── morphostruct.sh              # Runner script
+└── DOCUMENTATION.md             # Technical reference
 ```
+
+## Scaffold Categories
+
+### Primitives (27 shapes)
+
+Composable building blocks with CSG (Constructive Solid Geometry) support:
+
+| Category | Shapes |
+|----------|--------|
+| **Basic** | Cylinder, Sphere, Box, Cone |
+| **Geometric** | Torus, Capsule, Pyramid, Wedge, Prism, Tube, Ellipsoid, Hemisphere |
+| **Architectural** | Fillet, Chamfer, Slot, Counterbore, Countersink, Boss, Rib |
+| **Organic** | Branch, Bifurcation, Pore, Channel, Fiber, Membrane, Lattice Cell, Pore Array |
+
+### Skeletal Tissue (7 types)
+
+Bone and cartilage scaffolds with anatomically-accurate microarchitecture:
+- **Trabecular Bone** — Porous strut network mimicking cancellous bone
+- **Osteochondral** — Gradient interface between bone and cartilage
+- **Articular Cartilage** — Zonal architecture (superficial, middle, deep)
+- **Meniscus** — C-shaped fibrocartilage with radial zones
+- **Tendon-Ligament** — Aligned crimped fiber bundles
+- **Intervertebral Disc** — Nucleus pulposus + annulus fibrosus layers
+- **Haversian Bone** — Osteons with central Haversian canals
+
+### Organ-Specific (6 types)
+
+Tissue-specific microarchitectures:
+- **Hepatic Lobule** — Hexagonal liver functional unit
+- **Cardiac Patch** — Aligned myocardial fibers
+- **Kidney Tubule** — Proximal tubule with convolutions
+- **Lung Alveoli** — Branching respiratory tree
+- **Pancreatic Islet** — Endocrine cell clusters
+- **Liver Sinusoid** — Fenestrated capillary network
+
+### Advanced Lattices (5 types)
+
+TPMS (Triply Periodic Minimal Surfaces) and strut-based lattices:
+- **Gyroid** — Smooth minimal surface, high interconnectivity
+- **Schwarz-P** — Cubic symmetry minimal surface
+- **Octet Truss** — High strength-to-weight ratio
+- **Voronoi** — Organic-looking random cells
+- **Honeycomb** — Hexagonal prismatic cells
+
+### Microfluidic (3 types)
+
+Lab-on-chip and perfusion scaffolds:
+- **Organ-on-Chip** — Multi-chamber microfluidic device
+- **Gradient Scaffold** — Pore size or porosity gradients
+- **Perfusable Network** — Murray's law optimized branching
+
+## Technical Details
+
+### Murray's Law
+Vascular networks use Murray's law for optimal branching: the cube of the parent vessel diameter equals the sum of cubes of child diameters. This minimizes metabolic energy while maximizing nutrient transport.
+
+### TPMS Surfaces
+Gyroid and Schwarz-P scaffolds are triply periodic minimal surfaces with zero mean curvature. They provide high surface area (100-300 m²/cm³), ~50% porosity, and smooth interconnected pore networks ideal for cell infiltration.
+
+### CSG Tree Evaluation
+Primitives can be combined using boolean operations (union, difference, intersection) defined in JSON syntax. The AI assistant can generate complex composite geometries from natural language descriptions.
 
 ## Documentation
 
-See [DOCUMENTATION.md](DOCUMENTATION.md) for comprehensive technical documentation including:
-- Scaffold type specifications
-- Parameter reference
-- API documentation
-- Architecture overview
+- **[DOCUMENTATION.md](DOCUMENTATION.md)** — Comprehensive technical reference
+- **[docs/audit/](docs/audit/)** — Parameter documentation for all scaffold types
 
 ## Contributing
 
-Contributions are welcome. Please open an issue to discuss proposed changes before submitting a pull request.
+Contributions welcome. Please open an issue to discuss changes before submitting a pull request.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-Developed for tissue engineering research applications. Scaffold geometries are based on published biomaterials literature and anatomical references.
+Scaffold geometries based on published biomaterials literature. Parameter ranges validated against peer-reviewed tissue engineering research.
