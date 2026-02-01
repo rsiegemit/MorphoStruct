@@ -1,10 +1,15 @@
 import { apiRequest, apiBlobRequest } from './client';
-import { ScaffoldType } from '../types/scaffold';
+import { ScaffoldType } from '../types/scaffolds';
+
+// Default timeout for scaffold generation (used if preference not set)
+// This should match the backend default in config.py
+const DEFAULT_GENERATION_TIMEOUT_MS = 60000; // 60 seconds
 
 interface GenerateRequest {
   type: ScaffoldType;
   params: Record<string, any>;
   preview_only?: boolean;
+  invert?: boolean;
 }
 
 interface MeshData {
@@ -32,6 +37,7 @@ interface GenerateResponse {
     generation_time_ms: number;
   };
   validation: ValidationResult;
+  inverted?: boolean;
 }
 
 interface Preset {
@@ -46,23 +52,37 @@ interface PresetsResponse {
   presets: Preset[];
 }
 
+/**
+ * Generate a scaffold with the specified parameters.
+ * @param type - The scaffold type
+ * @param params - The scaffold parameters
+ * @param previewOnly - If true, generate a faster preview
+ * @param timeoutSeconds - Optional timeout in seconds (from user preferences). Defaults to 60s.
+ * @param invert - If true, invert the geometry (swap solid/void spaces)
+ */
 export async function generateScaffold(
   type: ScaffoldType,
   params: Record<string, any>,
-  previewOnly = false
+  previewOnly = false,
+  timeoutSeconds?: number,
+  invert = false
 ): Promise<GenerateResponse> {
   const endpoint = previewOnly ? '/api/preview' : '/api/generate';
+  // Convert seconds to milliseconds, use default if not provided
+  const timeoutMs = timeoutSeconds ? timeoutSeconds * 1000 : DEFAULT_GENERATION_TIMEOUT_MS;
   return apiRequest<GenerateResponse>(endpoint, {
     method: 'POST',
-    body: JSON.stringify({ type, params, preview_only: previewOnly }),
-  });
+    body: JSON.stringify({ type, params, preview_only: previewOnly, invert }),
+  }, timeoutMs);
 }
 
 export async function previewScaffold(
   type: ScaffoldType,
-  params: Record<string, any>
+  params: Record<string, any>,
+  timeoutSeconds?: number,
+  invert = false
 ): Promise<GenerateResponse> {
-  return generateScaffold(type, params, true);
+  return generateScaffold(type, params, true, timeoutSeconds, invert);
 }
 
 export async function validateParams(
@@ -75,11 +95,19 @@ export async function validateParams(
   });
 }
 
+/**
+ * Export a scaffold as STL file.
+ * @param scaffoldId - The scaffold ID from generation
+ * @param format - STL format (binary or ascii)
+ * @param timeoutSeconds - Optional timeout in seconds. Defaults to 60s.
+ */
 export async function exportSTL(
   scaffoldId: string,
-  format: 'binary' | 'ascii' = 'binary'
+  format: 'binary' | 'ascii' = 'binary',
+  timeoutSeconds?: number
 ): Promise<Blob> {
-  return apiBlobRequest(`/api/export/${scaffoldId}?format=${format}`);
+  const timeoutMs = timeoutSeconds ? timeoutSeconds * 1000 : DEFAULT_GENERATION_TIMEOUT_MS;
+  return apiBlobRequest(`/api/export/${scaffoldId}?format=${format}`, {}, timeoutMs);
 }
 
 export async function getPresets(): Promise<PresetsResponse> {

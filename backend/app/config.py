@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from functools import lru_cache
 
 class Settings(BaseSettings):
@@ -15,6 +16,16 @@ class Settings(BaseSettings):
     # Generation settings
     default_resolution: int = 16
     max_triangles: int = 500000
+    generation_timeout_seconds: int = 60  # Timeout for scaffold generation (must be multiple of 30)
+
+    @field_validator('generation_timeout_seconds')
+    @classmethod
+    def validate_timeout_multiple_of_30(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError('generation_timeout_seconds must be positive')
+        if v % 30 != 0:
+            raise ValueError('generation_timeout_seconds must be a multiple of 30 seconds')
+        return v
 
     # Database settings
     database_url: str = "sqlite:///./morphostruct.db"

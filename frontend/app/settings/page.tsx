@@ -1058,6 +1058,38 @@ export default function SettingsPage() {
                   </select>
                 </SettingRow>
               </div>
+
+              <div className="bg-white/[0.02] border-2 border-white/10 p-8 space-y-2">
+                <SectionHeader title="PERFORMANCE" />
+
+                {/* Generation Timeout */}
+                <SettingRow
+                  title="GENERATION TIMEOUT"
+                  description="MAXIMUM TIME ALLOWED FOR SCAFFOLD GENERATION (30s INCREMENTS)"
+                  noBorder
+                >
+                  <select
+                    value={preferences?.generation_timeout_seconds || 60}
+                    onChange={(e) => handleUpdatePreference('generation_timeout_seconds', parseInt(e.target.value))}
+                    disabled={saving}
+                    className="px-6 py-3 bg-black border-2 border-white/20 text-white font-bold tracking-tight focus:outline-none focus:border-emerald-400 transition-colors disabled:opacity-50"
+                  >
+                    <option value={30}>30 SECONDS</option>
+                    <option value={60}>1 MINUTE</option>
+                    <option value={90}>1.5 MINUTES</option>
+                    <option value={120}>2 MINUTES</option>
+                    <option value={180}>3 MINUTES</option>
+                    <option value={300}>5 MINUTES</option>
+                    <option value={600}>10 MINUTES</option>
+                  </select>
+                </SettingRow>
+              </div>
+
+              <div className="p-4 bg-blue-400/10 border-l-4 border-blue-400">
+                <p className="text-xs font-mono text-blue-400 leading-relaxed">
+                  LONGER TIMEOUTS ALLOW COMPLEX SCAFFOLDS WITH HIGH RESOLUTION TO COMPLETE. IF GENERATION FAILS WITH TIMEOUT, TRY REDUCING RESOLUTION OR COMPLEXITY.
+                </p>
+              </div>
             </div>
           )}
 

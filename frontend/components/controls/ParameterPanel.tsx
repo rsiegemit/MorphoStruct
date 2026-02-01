@@ -1,6 +1,6 @@
 'use client';
 
-import { ScaffoldType } from '@/lib/types/scaffold';
+import { ScaffoldType } from '@/lib/types/scaffolds';
 import { ScaffoldTypeSelector } from './ScaffoldTypeSelector';
 import { VascularControls } from './VascularControls';
 import { PorousDiscControls } from './PorousDiscControls';
@@ -8,6 +8,7 @@ import { TubularControls } from './TubularControls';
 import { LatticeControls } from './LatticeControls';
 import { DynamicControls } from './DynamicControls';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Play, RotateCcw } from 'lucide-react';
 
 // Scaffold types that have custom control components
@@ -26,6 +27,10 @@ interface ParameterPanelProps {
   onGenerate: () => void;
   onReset: () => void;
   isGenerating?: boolean;
+  invert?: boolean;
+  onInvertChange?: (invert: boolean) => void;
+  previewMode?: boolean;
+  onPreviewModeChange?: (previewMode: boolean) => void;
 }
 
 export function ParameterPanel({
@@ -36,6 +41,10 @@ export function ParameterPanel({
   onGenerate,
   onReset,
   isGenerating = false,
+  invert = false,
+  onInvertChange,
+  previewMode = true,
+  onPreviewModeChange,
 }: ParameterPanelProps) {
   const updateParam = (key: string, value: any) => {
     onParamsChange({ ...params, [key]: value });
@@ -77,19 +86,58 @@ export function ParameterPanel({
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="p-4 border-t dark:border-slate-700 flex gap-2">
-        <Button
-          onClick={onGenerate}
-          disabled={isGenerating}
-          className="flex-1"
-        >
-          <Play className="w-4 h-4 mr-2" />
-          {isGenerating ? 'Generating...' : 'Generate'}
-        </Button>
-        <Button variant="outline" onClick={onReset}>
-          <RotateCcw className="w-4 h-4" />
-        </Button>
+      {/* Toggles and action buttons */}
+      <div className="p-4 border-t dark:border-slate-700 space-y-3">
+        {/* Preview Mode Toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <label htmlFor="preview-toggle" className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              Fast Preview
+            </label>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Lower resolution, faster generation
+            </span>
+          </div>
+          <Switch
+            id="preview-toggle"
+            checked={previewMode}
+            onCheckedChange={onPreviewModeChange}
+            className="data-[state=checked]:bg-blue-500 dark:data-[state=checked]:bg-blue-500"
+          />
+        </div>
+
+        {/* Invert Geometry Toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <label htmlFor="invert-toggle" className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              Invert Geometry
+            </label>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Swap solid/void
+            </span>
+          </div>
+          <Switch
+            id="invert-toggle"
+            checked={invert}
+            onCheckedChange={onInvertChange}
+            className="data-[state=checked]:bg-emerald-500 dark:data-[state=checked]:bg-emerald-500"
+          />
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          <Button
+            onClick={onGenerate}
+            disabled={isGenerating}
+            className="flex-1"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            {isGenerating ? 'Generating...' : 'Generate'}
+          </Button>
+          <Button variant="outline" onClick={onReset}>
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
