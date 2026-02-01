@@ -6,6 +6,7 @@ import { VascularControls } from './VascularControls';
 import { PorousDiscControls } from './PorousDiscControls';
 import { TubularControls } from './TubularControls';
 import { LatticeControls } from './LatticeControls';
+import { PrimitiveControls } from './PrimitiveControls';
 import { DynamicControls } from './DynamicControls';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +18,7 @@ const CUSTOM_CONTROL_TYPES = new Set([
   ScaffoldType.POROUS_DISC,
   ScaffoldType.TUBULAR_CONDUIT,
   ScaffoldType.LATTICE,
+  ScaffoldType.PRIMITIVE,
 ]);
 
 interface ParameterPanelProps {
@@ -75,6 +77,9 @@ export function ParameterPanel({
         )}
         {scaffoldType === ScaffoldType.LATTICE && (
           <LatticeControls params={params} onChange={updateParam} />
+        )}
+        {scaffoldType === ScaffoldType.PRIMITIVE && (
+          <PrimitiveControls params={params} onChange={updateParam} onParamsChange={onParamsChange} />
         )}
         {/* DynamicControls for all other scaffold types */}
         {!CUSTOM_CONTROL_TYPES.has(scaffoldType) && (

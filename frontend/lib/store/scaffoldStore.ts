@@ -102,7 +102,7 @@ const DEFAULT_PARAMS: Record<ScaffoldType, Record<string, any>> = {
   },
   [ScaffoldType.PRIMITIVE]: {
     shape: 'cylinder',
-    dimensions: { radius: 5, height: 10 },
+    dimensions: { radius_mm: 5, height_mm: 10 },
   },
   // Skeletal
   [ScaffoldType.TRABECULAR_BONE]: {
