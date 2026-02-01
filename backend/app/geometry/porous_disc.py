@@ -29,8 +29,11 @@ class PorousDiscParams:
         diameter_mm: Disc diameter in millimeters (1-50)
         height_mm: Disc height/thickness in millimeters (0.5-10)
         pore_diameter_um: Pore diameter in microns (50-500)
-        pore_spacing_um: Center-to-center pore spacing in microns (100-1000)
+        pore_spacing_um: Center-to-center pore spacing in microns (100-1000).
+            If porosity_target is set, this is auto-calculated and ignored.
         pore_pattern: Pore arrangement pattern ('hexagonal' or 'grid')
+        porosity_target: Target porosity (0.1-0.9). If set, pore_spacing_um is
+            auto-calculated to achieve this porosity. If None, uses pore_spacing_um directly.
         resolution: Number of segments for cylindrical surfaces (8-64)
     """
     diameter_mm: float = 10.0
@@ -38,6 +41,7 @@ class PorousDiscParams:
     pore_diameter_um: float = 200.0
     pore_spacing_um: float = 400.0
     pore_pattern: Literal['hexagonal', 'grid'] = 'hexagonal'
+    porosity_target: float | None = None
     resolution: int = 16
 
 
@@ -139,7 +143,27 @@ def generate_porous_disc(params: PorousDiscParams) -> tuple[m3d.Manifold, dict]:
     # Convert units
     radius_mm = params.diameter_mm / 2
     pore_radius_mm = params.pore_diameter_um / 2000  # um to mm
-    spacing_mm = params.pore_spacing_um / 1000  # um to mm
+
+    # Calculate spacing from porosity_target if specified
+    if params.porosity_target is not None:
+        # Clamp porosity to valid range
+        target_porosity = max(0.1, min(0.9, params.porosity_target))
+
+        # Calculate spacing to achieve target porosity
+        # For hexagonal packing: porosity = (π * r²) / (s² * √3/2)
+        # Solving for s: s = r * sqrt(2π / (porosity * √3))
+        # For grid packing: porosity = (π * r²) / s²
+        # Solving for s: s = r * sqrt(π / porosity)
+        if params.pore_pattern == 'hexagonal':
+            spacing_mm = pore_radius_mm * np.sqrt(2 * np.pi / (target_porosity * np.sqrt(3)))
+        else:  # grid
+            spacing_mm = pore_radius_mm * np.sqrt(np.pi / target_porosity)
+
+        # Ensure minimum spacing (pores can't overlap)
+        min_spacing = pore_radius_mm * 2.1  # 5% margin
+        spacing_mm = max(spacing_mm, min_spacing)
+    else:
+        spacing_mm = params.pore_spacing_um / 1000  # um to mm
 
     # Create base disc
     base = m3d.Manifold.cylinder(
@@ -212,4 +236,8 @@ def generate_porous_disc_from_dict(params: dict) -> tuple[m3d.Manifold, dict]:
         }
         manifold, stats = generate_porous_disc_from_dict(params)
     """
-    return generate_porous_disc(PorousDiscParams(**params))
+    # Filter to only valid PorousDiscParams fields
+    import dataclasses
+    valid_fields = {f.name for f in dataclasses.fields(PorousDiscParams)}
+    filtered_params = {k: v for k, v in params.items() if k in valid_fields}
+    return generate_porous_disc(PorousDiscParams(**filtered_params))

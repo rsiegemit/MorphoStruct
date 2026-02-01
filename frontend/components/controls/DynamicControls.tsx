@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { ScaffoldType } from '@/lib/types/scaffold';
+import { ScaffoldType } from '@/lib/types/scaffolds';
 import {
   PARAMETER_META,
   ParamMeta,

@@ -1,6 +1,6 @@
 'use client';
 
-import { ScaffoldType } from '@/lib/types/scaffold';
+import { ScaffoldType } from '@/lib/types/scaffolds';
 import {
   Select,
   SelectContent,

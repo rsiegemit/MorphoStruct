@@ -9,12 +9,15 @@ Provides endpoints for:
 - GET /presets: List available scaffold presets
 """
 
+import asyncio
 import time
 import uuid
 from typing import Dict, Any, Optional, List, Union
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
+
+from app.config import get_settings
 
 from app.models.scaffold import (
     ScaffoldType,
@@ -153,6 +156,12 @@ from app.geometry.stl_export import (
 )
 from app.core.logging import get_logger
 
+try:
+    import manifold3d as m3d
+    MANIFOLD_AVAILABLE = True
+except ImportError:
+    MANIFOLD_AVAILABLE = False
+
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api", tags=["scaffolds"])
 
@@ -173,6 +182,7 @@ class GenerateRequest(BaseModel):
     type: ScaffoldType = Field(description="Scaffold type to generate")
     params: Dict[str, Any] = Field(default_factory=dict, description="Type-specific parameters")
     preview_only: bool = Field(default=False, description="Skip final boolean operations for speed")
+    invert: bool = Field(default=False, description="Invert geometry (swap solid/void spaces)")
 
 
 class MeshResponse(BaseModel):
@@ -200,6 +210,7 @@ class GenerateResponse(BaseModel):
     stl_base64: Optional[str] = Field(default=None, description="Base64-encoded STL file")
     stats: StatsResponse = Field(description="Generation statistics")
     bounding_box: Dict[str, List[float]] = Field(description="Bounding box {min: [x,y,z], max: [x,y,z]}")
+    inverted: bool = Field(default=False, description="Whether the geometry was inverted")
 
 
 class ValidateRequest(BaseModel):
@@ -800,6 +811,57 @@ PRESETS: List[PresetInfo] = [
 # ============================================================================
 
 
+def _invert_manifold(manifold, padding_mm: float = 1.0):
+    """
+    Invert a manifold by subtracting it from its bounding box.
+
+    This swaps positive and negative spaces - what was solid becomes void
+    and vice versa.
+
+    Args:
+        manifold: manifold3d Manifold object to invert
+        padding_mm: Padding to add around the bounding box (default: 1.0mm)
+
+    Returns:
+        Inverted manifold (bounding_box - original)
+    """
+    if not MANIFOLD_AVAILABLE:
+        raise RuntimeError("manifold3d library not available for inversion")
+
+    bbox_min, bbox_max = get_bounding_box(manifold)
+    logger.debug(f"Inversion: bbox_min={bbox_min}, bbox_max={bbox_max}")
+
+    # Calculate dimensions with padding
+    dx = bbox_max[0] - bbox_min[0] + 2 * padding_mm
+    dy = bbox_max[1] - bbox_min[1] + 2 * padding_mm
+    dz = bbox_max[2] - bbox_min[2] + 2 * padding_mm
+
+    # Validate dimensions
+    if dx <= 0 or dy <= 0 or dz <= 0:
+        logger.warning(f"Invalid bounding box dimensions: dx={dx}, dy={dy}, dz={dz}")
+        return manifold  # Return original if dimensions are invalid
+
+    logger.debug(f"Inversion: creating cube with dimensions [{dx}, {dy}, {dz}]")
+
+    # Create bounding box cube
+    bbox_cube = m3d.Manifold.cube([dx, dy, dz])
+
+    # Translate to match original position (with padding offset)
+    translate_vec = [
+        bbox_min[0] - padding_mm,
+        bbox_min[1] - padding_mm,
+        bbox_min[2] - padding_mm
+    ]
+    logger.debug(f"Inversion: translating cube by {translate_vec}")
+    bbox_cube = bbox_cube.translate(translate_vec)
+
+    # Subtract original from bounding box to invert
+    result = bbox_cube - manifold
+    logger.debug(f"Inversion complete: result is_empty={result.is_empty() if hasattr(result, 'is_empty') else 'unknown'}")
+
+    return result
+
+
 def _convert_params_for_generator(scaffold_type: ScaffoldType, params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert API params to format expected by geometry generators.
@@ -1321,7 +1383,11 @@ async def generate_scaffold(request: GenerateRequest) -> GenerateResponse:
     Generate a scaffold from parameters.
 
     Full generation including boolean operations and STL export.
+    Timeout is configurable via GENERATION_TIMEOUT_SECONDS env var (default: 60s, must be multiple of 30).
     """
+    settings = get_settings()
+    timeout_seconds = settings.generation_timeout_seconds
+
     if not check_manifold_available():
         logger.error("manifold3d library not available")
         raise HTTPException(
@@ -1329,16 +1395,26 @@ async def generate_scaffold(request: GenerateRequest) -> GenerateResponse:
             detail="manifold3d library not available. Install with: pip install manifold3d",
         )
 
-    logger.info(f"Generating scaffold: type={request.type}, preview_only={request.preview_only}")
+    logger.info(f"Generating scaffold: type={request.type}, preview_only={request.preview_only}, invert={request.invert}, timeout={timeout_seconds}s")
     start_time = time.time()
 
     try:
-        # Generate the scaffold
-        manifold, gen_stats = _generate_scaffold(
-            request.type,
-            request.params,
-            preview_only=request.preview_only,
+        # Generate the scaffold with timeout
+        # Run synchronous generation in thread pool with asyncio timeout
+        manifold, gen_stats = await asyncio.wait_for(
+            asyncio.to_thread(
+                _generate_scaffold,
+                request.type,
+                request.params,
+                request.preview_only,
+            ),
+            timeout=timeout_seconds,
         )
+
+        # Apply inversion if requested (swap solid/void spaces)
+        if request.invert:
+            logger.info("Applying geometry inversion...")
+            manifold = _invert_manifold(manifold, padding_mm=1.0)
 
         generation_time_ms = (time.time() - start_time) * 1000
         logger.info(f"Scaffold generated successfully in {generation_time_ms:.2f}ms")
@@ -1363,6 +1439,7 @@ async def generate_scaffold(request: GenerateRequest) -> GenerateResponse:
                 "type": request.type,
                 "params": request.params,
                 "stats": gen_stats,
+                "inverted": request.invert,
             },
         )
 
@@ -1384,8 +1461,16 @@ async def generate_scaffold(request: GenerateRequest) -> GenerateResponse:
                 "min": list(bbox_min),
                 "max": list(bbox_max),
             },
+            inverted=request.invert,
         )
 
+    except asyncio.TimeoutError:
+        elapsed = time.time() - start_time
+        logger.error(f"Scaffold generation timed out after {elapsed:.1f}s (limit: {timeout_seconds}s)")
+        raise HTTPException(
+            status_code=408,
+            detail=f"Generation timed out after {timeout_seconds} seconds. Try reducing resolution or complexity.",
+        )
     except ValueError as e:
         logger.error(f"Invalid parameters for scaffold generation: {e}")
         raise HTTPException(status_code=400, detail=str(e))

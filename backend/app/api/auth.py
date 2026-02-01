@@ -185,6 +185,7 @@ class PreferencesRequest(BaseModel):
     default_wall_thickness: Optional[float] = None
     auto_save_drafts: Optional[bool] = None
     auto_save_interval: Optional[str] = None
+    generation_timeout_seconds: Optional[int] = None  # Must be multiple of 30
 
     # Viewer preferences
     camera_type: Optional[str] = None
@@ -239,6 +240,7 @@ class PreferencesResponse(BaseModel):
     default_wall_thickness: Optional[float] = None
     auto_save_drafts: Optional[bool] = None
     auto_save_interval: Optional[str] = None
+    generation_timeout_seconds: Optional[int] = None  # Must be multiple of 30
 
     # Viewer preferences
     camera_type: Optional[str] = None

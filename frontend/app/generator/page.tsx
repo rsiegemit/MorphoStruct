@@ -8,8 +8,9 @@ import { ChatPanel } from '@/components/chat';
 import { ExportPanel } from '@/components/export';
 import { useScaffoldStore, useChatStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/store/authStore';
+import { usePreferencesStore } from '@/lib/store/preferencesStore';
 import { generateScaffold, exportSTL, downloadBlob, sendChatMessage } from '@/lib/api';
-import { ScaffoldType } from '@/lib/types/scaffold';
+import { ScaffoldType } from '@/lib/types/scaffolds';
 import { NavHeader } from '@/components/NavHeader';
 
 export default function GeneratorPage() {
@@ -30,6 +31,10 @@ export default function GeneratorPage() {
     params,
     setParams,
     resetParams,
+    invert,
+    setInvert,
+    previewMode,
+    setPreviewMode,
     meshData,
     setMeshData,
     isGenerating,
@@ -56,11 +61,34 @@ export default function GeneratorPage() {
   // Export state
   const [isExporting, setIsExporting] = useState(false);
 
+  // Get generation timeout from preferences (default 60s)
+  const generationTimeout = usePreferencesStore((state) => state.preferences?.generation_timeout_seconds) || 60;
+
   // Handle scaffold generation
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
     try {
-      const result = await generateScaffold(scaffoldType, params);
+      // In preview mode, reduce resolution parameters for faster generation
+      let effectiveParams = params;
+      if (previewMode) {
+        effectiveParams = { ...params };
+        // Reduce resolution-related parameters
+        if ('resolution' in effectiveParams && effectiveParams.resolution > 8) {
+          effectiveParams.resolution = 8;
+        }
+        if ('samples_per_cell' in effectiveParams && effectiveParams.samples_per_cell > 12) {
+          effectiveParams.samples_per_cell = 12;
+        }
+        // Reduce branch generations for tree-like structures
+        if ('branch_generations' in effectiveParams && effectiveParams.branch_generations > 2) {
+          effectiveParams.branch_generations = 2;
+        }
+        // Reduce cell counts for lattice structures
+        if ('cell_count' in effectiveParams && effectiveParams.cell_count > 15) {
+          effectiveParams.cell_count = 15;
+        }
+      }
+      const result = await generateScaffold(scaffoldType, effectiveParams, previewMode, generationTimeout, invert);
       setMeshData(result.mesh);
       setValidation(result.validation);
       setStats(result.stats);
@@ -70,14 +98,14 @@ export default function GeneratorPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [scaffoldType, params, setIsGenerating, setMeshData, setValidation, setStats, setScaffoldId]);
+  }, [scaffoldType, params, previewMode, generationTimeout, invert, setIsGenerating, setMeshData, setValidation, setStats, setScaffoldId]);
 
   // Handle export
   const handleExport = useCallback(async (format: 'binary' | 'ascii') => {
     if (!scaffoldId) return;
     setIsExporting(true);
     try {
-      const blob = await exportSTL(scaffoldId, format);
+      const blob = await exportSTL(scaffoldId, format, generationTimeout);
       const filename = `scaffold_${scaffoldType}_${Date.now()}.stl`;
       downloadBlob(blob, filename);
     } catch (error) {
@@ -85,7 +113,7 @@ export default function GeneratorPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [scaffoldId, scaffoldType]);
+  }, [scaffoldId, scaffoldType, generationTimeout]);
 
   // Handle chat messages
   const handleSendMessage = useCallback(async (message: string) => {
@@ -156,6 +184,10 @@ export default function GeneratorPage() {
               onGenerate={handleGenerate}
               onReset={resetParams}
               isGenerating={isGenerating}
+              invert={invert}
+              onInvertChange={setInvert}
+              previewMode={previewMode}
+              onPreviewModeChange={setPreviewMode}
             />
           </div>
 

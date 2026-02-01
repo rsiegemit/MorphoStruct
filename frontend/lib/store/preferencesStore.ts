@@ -29,6 +29,7 @@ export const defaultPreferences: Preferences = {
   default_wall_thickness: 0.5,
   auto_save_drafts: true,
   auto_save_interval: '5min',
+  generation_timeout_seconds: 60,
   camera_type: 'perspective',
   show_grid: true,
   show_axis_helpers: true,

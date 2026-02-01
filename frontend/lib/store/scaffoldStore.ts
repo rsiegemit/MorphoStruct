@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ScaffoldType } from '../types/scaffold';
+import { ScaffoldType } from '../types/scaffolds';
 
 interface MeshData {
   vertices: number[];
@@ -30,6 +30,14 @@ interface ScaffoldStore {
   setParams: (params: Record<string, any>) => void;
   updateParam: (key: string, value: any) => void;
   resetParams: () => void;
+
+  // Invert geometry toggle (persists across scaffold type changes)
+  invert: boolean;
+  setInvert: (invert: boolean) => void;
+
+  // Preview mode toggle (faster generation, lower resolution)
+  previewMode: boolean;
+  setPreviewMode: (previewMode: boolean) => void;
 
   // Generated mesh data
   meshData: MeshData | null;
@@ -68,9 +76,9 @@ const DEFAULT_PARAMS: Record<ScaffoldType, Record<string, any>> = {
     curvature: 0.3,
     tips_down: true,
     deterministic: false,
-    outer_radius_mm: 10,
-    height_mm: 5,
-    inlet_radius_mm: 1,
+    outer_radius: 10,
+    height: 5,
+    inlet_radius: 1,
   },
   [ScaffoldType.POROUS_DISC]: {
     diameter_mm: 10,
@@ -195,10 +203,13 @@ const DEFAULT_PARAMS: Record<ScaffoldType, Record<string, any>> = {
     spacing: 300.0,
   },
   [ScaffoldType.LIVER_SINUSOID]: {
-    sinusoid_diameter: 20.0,
-    length: 5.0,
-    fenestration_size: 1.0,
-    fenestration_density: 0.2,
+    sinusoid_diameter: 500.0,  // um - scaled up from native 12um for visibility
+    sinusoid_length: 2000.0,   // um - shorter for faster generation
+    sinusoid_wall_thickness: 50.0,  // um
+    fenestration_porosity: 0.0,  // disabled by default for performance
+    enable_space_of_disse: false,  // disabled by default for performance
+    scaffold_length: 3.0,  // mm
+    resolution: 12,
   },
   // Soft Tissue
   [ScaffoldType.MULTILAYER_SKIN]: {
@@ -270,12 +281,14 @@ const DEFAULT_PARAMS: Record<ScaffoldType, Record<string, any>> = {
   },
   // Dental
   [ScaffoldType.DENTIN_PULP]: {
-    tooth_height: 12.0,
-    crown_diameter: 10.0,
+    tooth_height: 17.0,
+    crown_diameter: 7.0,
+    crown_height: 5.0,
     root_length: 12.0,
-    root_diameter: 5.0,
+    root_diameter: 3.0,
     pulp_chamber_size: 0.4,
-    dentin_thickness: 3.0,
+    dentin_thickness: 2.0,
+    resolution: 16,
   },
   [ScaffoldType.EAR_AURICLE]: {
     scale_factor: 1.0,
@@ -358,6 +371,7 @@ export const useScaffoldStore = create<ScaffoldStore>((set, get) => ({
     stlBase64: null,
     validation: null,
     stats: null,
+    // Note: invert is NOT reset when changing scaffold type (persists)
   }),
 
   params: DEFAULT_PARAMS[ScaffoldType.VASCULAR_NETWORK],
@@ -368,6 +382,12 @@ export const useScaffoldStore = create<ScaffoldStore>((set, get) => ({
   resetParams: () => set((state) => ({
     params: DEFAULT_PARAMS[state.scaffoldType]
   })),
+
+  invert: false,
+  setInvert: (invert) => set({ invert }),
+
+  previewMode: true,  // Default to preview mode for faster generation
+  setPreviewMode: (previewMode) => set({ previewMode }),
 
   meshData: null,
   setMeshData: (data) => set({ meshData: data }),

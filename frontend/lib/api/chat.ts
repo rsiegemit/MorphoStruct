@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import { ScaffoldType } from '../types/scaffold';
+import { ScaffoldType } from '../types/scaffolds';
 
 interface ChatHistoryMessage {
   role: 'user' | 'assistant';

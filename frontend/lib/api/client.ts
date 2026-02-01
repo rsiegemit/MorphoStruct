@@ -38,13 +38,14 @@ async function withTimeout<T>(
 
 async function retryWrapper<T>(
   fn: () => Promise<T>,
-  maxRetries: number = MAX_RETRIES
+  maxRetries: number = MAX_RETRIES,
+  timeoutMs: number = REQUEST_TIMEOUT
 ): Promise<T> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await withTimeout(fn(), REQUEST_TIMEOUT);
+      return await withTimeout(fn(), timeoutMs);
     } catch (error) {
       lastError = error;
 
@@ -69,7 +70,8 @@ async function retryWrapper<T>(
 
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs: number = REQUEST_TIMEOUT
 ): Promise<T> {
   return retryWrapper(async () => {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -91,12 +93,13 @@ export async function apiRequest<T>(
     }
 
     return response.json();
-  });
+  }, MAX_RETRIES, timeoutMs);
 }
 
 export async function apiBlobRequest(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs: number = REQUEST_TIMEOUT
 ): Promise<Blob> {
   return retryWrapper(async () => {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -124,5 +127,6 @@ export async function apiBlobRequest(
     }
 
     return response.blob();
-  });
+  }, MAX_RETRIES, timeoutMs);
 }
+

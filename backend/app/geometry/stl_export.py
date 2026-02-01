@@ -193,13 +193,12 @@ def get_bounding_box(manifold: Any) -> Tuple[Tuple[float, float, float], Tuple[f
         Tuple of (min_point, max_point) where each point is (x, y, z)
     """
     mesh = manifold.to_mesh()
-    tri_verts = np.array(mesh.tri_verts)
 
-    if len(tri_verts) == 0:
+    # vert_properties contains actual vertex coordinates, tri_verts contains indices
+    verts = np.array(mesh.vert_properties)[:, :3]  # Get vertex positions (first 3 columns)
+
+    if len(verts) == 0:
         return ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
-
-    # Reshape to get all vertex coordinates
-    verts = tri_verts.reshape(-1, 3)
 
     min_pt = tuple(verts.min(axis=0).tolist())
     max_pt = tuple(verts.max(axis=0).tolist())

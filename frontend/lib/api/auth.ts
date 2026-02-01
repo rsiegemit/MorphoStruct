@@ -28,6 +28,7 @@ export interface Preferences {
   default_wall_thickness?: number;
   auto_save_drafts?: boolean;
   auto_save_interval?: '1min' | '5min' | '10min' | '30min';
+  generation_timeout_seconds?: number;  // Must be multiple of 30, default 60
 
   // Viewer settings
   camera_type?: 'perspective' | 'orthographic';
