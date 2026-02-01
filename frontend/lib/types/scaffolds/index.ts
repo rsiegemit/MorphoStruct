@@ -33,7 +33,7 @@ import {
 import { MultilayerSkinParams, SkeletalMuscleParams, CorneaParams, AdiposeParams } from './soft-tissue';
 import {
   BloodVesselParams, NerveConduitParams, SpinalCordParams, BladderParams, TracheaParams,
-  TubularConduitParams
+  TubularConduitParams, VascularPerfusionDishParams
 } from './tubular';
 import { DentinPulpParams, EarAuricleParams, NasalSeptumParams } from './dental';
 import {
@@ -78,6 +78,7 @@ export type ScaffoldParams =
   | ({ type: ScaffoldType.SPINAL_CORD } & SpinalCordParams)
   | ({ type: ScaffoldType.BLADDER } & BladderParams)
   | ({ type: ScaffoldType.TRACHEA } & TracheaParams)
+  | ({ type: ScaffoldType.VASCULAR_PERFUSION_DISH } & VascularPerfusionDishParams)
   // Dental
   | ({ type: ScaffoldType.DENTIN_PULP } & DentinPulpParams)
   | ({ type: ScaffoldType.EAR_AURICLE } & EarAuricleParams)

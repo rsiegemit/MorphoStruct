@@ -20,6 +20,7 @@ export { DENTAL_PARAMETER_META } from './dental';
 export { LATTICE_PARAMETER_META } from './lattice';
 export { MICROFLUIDIC_PARAMETER_META } from './microfluidic';
 export { LEGACY_PARAMETER_META } from './legacy';
+export { PRIMITIVE_SHAPE_OPTIONS, PRIMITIVE_DIMENSIONS, getPrimitiveDimensions } from './primitives';
 
 // Import all category metadata for combined export
 import { SKELETAL_PARAMETER_META } from './skeletal';
@@ -78,6 +79,7 @@ export function getScaffoldTypeLabel(type: ScaffoldType): string {
     [ScaffoldType.SPINAL_CORD]: 'Spinal Cord',
     [ScaffoldType.BLADDER]: 'Bladder',
     [ScaffoldType.TRACHEA]: 'Trachea',
+    [ScaffoldType.VASCULAR_PERFUSION_DISH]: 'Vascular Perfusion Dish',
     [ScaffoldType.DENTIN_PULP]: 'Dentin-Pulp',
     [ScaffoldType.EAR_AURICLE]: 'Ear Auricle',
     [ScaffoldType.NASAL_SEPTUM]: 'Nasal Septum',

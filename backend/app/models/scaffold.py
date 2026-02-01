@@ -1,5 +1,5 @@
 """
-Type definitions for SHED scaffold generation.
+Type definitions for MorphoStruct scaffold generation.
 Synchronized with frontend TypeScript types.
 """
 
@@ -16,14 +16,23 @@ from pydantic import BaseModel, Field, field_validator
 class ScaffoldType(str, Enum):
     """Supported scaffold types."""
 
-    # Existing (5)
+    # Legacy (3) - Original vascular and porous scaffolds
     VASCULAR_NETWORK = "vascular_network"
     POROUS_DISC = "porous_disc"
     TUBULAR_CONDUIT = "tubular_conduit"
-    LATTICE = "lattice"
+
+    # Primitives (1) - Basic geometric shapes
     PRIMITIVE = "primitive"
 
-    # Skeletal (7)
+    # Lattice (6) - Regular and organic lattice structures
+    LATTICE = "lattice"
+    GYROID = "gyroid"
+    SCHWARZ_P = "schwarz_p"
+    OCTET_TRUSS = "octet_truss"
+    VORONOI = "voronoi"
+    HONEYCOMB = "honeycomb"
+
+    # Skeletal (7) - Bone and cartilage scaffolds
     TRABECULAR_BONE = "trabecular_bone"
     OSTEOCHONDRAL = "osteochondral"
     ARTICULAR_CARTILAGE = "articular_cartilage"
@@ -32,7 +41,7 @@ class ScaffoldType(str, Enum):
     INTERVERTEBRAL_DISC = "intervertebral_disc"
     HAVERSIAN_BONE = "haversian_bone"
 
-    # Organ (6)
+    # Organ (6) - Organ-specific scaffolds
     HEPATIC_LOBULE = "hepatic_lobule"
     CARDIAC_PATCH = "cardiac_patch"
     KIDNEY_TUBULE = "kidney_tubule"
@@ -40,32 +49,26 @@ class ScaffoldType(str, Enum):
     PANCREATIC_ISLET = "pancreatic_islet"
     LIVER_SINUSOID = "liver_sinusoid"
 
-    # Soft Tissue (4)
+    # Soft Tissue (4) - Skin, muscle, and other soft tissues
     MULTILAYER_SKIN = "multilayer_skin"
     SKELETAL_MUSCLE = "skeletal_muscle"
     CORNEA = "cornea"
     ADIPOSE = "adipose"
 
-    # Tubular (5)
+    # Tubular (6) - Vessel-like and tubular scaffolds
     BLOOD_VESSEL = "blood_vessel"
     NERVE_CONDUIT = "nerve_conduit"
     SPINAL_CORD = "spinal_cord"
     BLADDER = "bladder"
     TRACHEA = "trachea"
+    VASCULAR_PERFUSION_DISH = "vascular_perfusion_dish"
 
-    # Dental (3)
+    # Dental (3) - Dental and craniofacial scaffolds
     DENTIN_PULP = "dentin_pulp"
     EAR_AURICLE = "ear_auricle"
     NASAL_SEPTUM = "nasal_septum"
 
-    # Advanced Lattice (5)
-    GYROID = "gyroid"
-    SCHWARZ_P = "schwarz_p"
-    OCTET_TRUSS = "octet_truss"
-    VORONOI = "voronoi"
-    HONEYCOMB = "honeycomb"
-
-    # Microfluidic (3)
+    # Microfluidic (3) - Chip and flow scaffolds
     ORGAN_ON_CHIP = "organ_on_chip"
     GRADIENT_SCAFFOLD = "gradient_scaffold"
     PERFUSABLE_NETWORK = "perfusable_network"
@@ -96,10 +99,40 @@ class UnitCell(str, Enum):
 class PrimitiveShape(str, Enum):
     """Primitive shape types."""
 
+    # Basic (4 existing)
     CYLINDER = "cylinder"
     SPHERE = "sphere"
     BOX = "box"
     CONE = "cone"
+
+    # Geometric (8 new)
+    TORUS = "torus"
+    CAPSULE = "capsule"
+    PYRAMID = "pyramid"
+    WEDGE = "wedge"
+    PRISM = "prism"
+    TUBE = "tube"
+    ELLIPSOID = "ellipsoid"
+    HEMISPHERE = "hemisphere"
+
+    # Architectural (7 new)
+    FILLET = "fillet"
+    CHAMFER = "chamfer"
+    SLOT = "slot"
+    COUNTERBORE = "counterbore"
+    COUNTERSINK = "countersink"
+    BOSS = "boss"
+    RIB = "rib"
+
+    # Organic/Bio (8 new)
+    BRANCH = "branch"
+    BIFURCATION = "bifurcation"
+    PORE = "pore"
+    CHANNEL = "channel"
+    FIBER = "fiber"
+    MEMBRANE = "membrane"
+    LATTICE_CELL = "lattice_cell"
+    PORE_ARRAY = "pore_array"
 
 
 class ModificationOperation(str, Enum):
@@ -107,6 +140,10 @@ class ModificationOperation(str, Enum):
 
     HOLE = "hole"
     SHELL = "shell"
+    FILLET_EDGES = "fillet_edges"
+    CHAMFER_EDGES = "chamfer_edges"
+    TAPER = "taper"
+    TWIST = "twist"
 
 
 class GradientType(str, Enum):
@@ -204,6 +241,92 @@ class VascularNetworkParams(BaseParams):
         default=1.0, gt=0, description="Inlet branch radius (mm)"
     )
     seed: Optional[int] = Field(default=None, description="Random seed (optional)")
+
+    @field_validator("inlet_radius_mm")
+    @classmethod
+    def validate_inlet_radius(cls, v: float, info) -> float:
+        """Ensure inlet radius is smaller than outer radius."""
+        outer_radius = info.data.get("outer_radius_mm")
+        if outer_radius and v >= outer_radius:
+            raise ValueError("inlet_radius_mm must be less than outer_radius_mm")
+        return v
+
+
+class VascularPerfusionDishParams(BaseParams):
+    """Parameters for vascular perfusion dish scaffold with advanced branching."""
+
+    type: Literal[ScaffoldType.VASCULAR_PERFUSION_DISH] = ScaffoldType.VASCULAR_PERFUSION_DISH
+
+    # Network structure
+    inlets: int = Field(
+        default=4, ge=1, le=25, description="Number of inlet branches (1-25)"
+    )
+    levels: int = Field(
+        default=2, ge=0, le=8, description="Branching levels (0-8)"
+    )
+    splits: int = Field(
+        default=2, ge=1, le=6, description="Splits per branch (1-6)"
+    )
+    spread: float = Field(
+        default=0.35, ge=0.1, le=0.8, description="Branch spread factor (0.1-0.8)"
+    )
+    ratio: float = Field(
+        default=0.79,
+        ge=0.5,
+        le=0.95,
+        description="Branch radius ratio (0.5-0.95, Murray's law = 0.79)",
+    )
+    cone_angle: float = Field(
+        default=60.0, ge=10.0, le=180.0, description="Cone angle (10-180 degrees)"
+    )
+    curvature: float = Field(
+        default=0.3, ge=0.0, le=1.0, description="Branch curvature (0-1)"
+    )
+    bottom_height: float = Field(
+        default=0.06, ge=0.02, le=1.0, description="Height from bottom where vessels terminate (0.02-1.0)"
+    )
+
+    # Randomness/variation parameters
+    radius_variation: float = Field(
+        default=0.25, ge=0.0, le=1.0, description="Radius variation (0-1, as fraction)"
+    )
+    flip_chance: float = Field(
+        default=0.30, ge=0.0, le=0.5, description="Chance of flipping branch direction (0-0.5)"
+    )
+    z_variation: float = Field(
+        default=0.35, ge=0.0, le=0.5, description="Z-axis variation factor (0-0.5)"
+    )
+    angle_variation: float = Field(
+        default=0.40, ge=0.0, le=0.5, description="Angle variation factor (0-0.5)"
+    )
+    collision_buffer: float = Field(
+        default=0.08, ge=0.0, le=0.3, description="Extra buffer for collision detection (0-0.3)"
+    )
+
+    # Behavior flags
+    even_spread: bool = Field(
+        default=True, description="Use even 360° spread vs directional cone spread"
+    )
+    deterministic: bool = Field(
+        default=False, description="Use deterministic straight grid-aligned channels"
+    )
+    tips_down: bool = Field(
+        default=False, description="Force terminal branch tips to point straight down"
+    )
+
+    # Geometry dimensions
+    outer_radius_mm: float = Field(
+        default=4.875, gt=0, description="Outer cylinder radius (mm)"
+    )
+    height_mm: float = Field(
+        default=2.0, gt=0, description="Total height (mm)"
+    )
+    inlet_radius_mm: float = Field(
+        default=0.35, gt=0, description="Inlet branch radius (mm)"
+    )
+    seed: Optional[int] = Field(
+        default=42, description="Random seed for reproducibility"
+    )
 
     @field_validator("inlet_radius_mm")
     @classmethod
@@ -1180,13 +1303,20 @@ class PerfusableNetworkParams(BaseParams):
 # ============================================================================
 
 ScaffoldParams = Union[
-    # Original 5
+    # Legacy (3)
     VascularNetworkParams,
     PorousDiscParams,
     TubularConduitParams,
-    LatticeParams,
+    # Primitives (1)
     PrimitiveParams,
-    # Skeletal 7
+    # Lattice (6)
+    LatticeParams,
+    GyroidParams,
+    SchwarzPParams,
+    OctetTrussParams,
+    VoronoiParams,
+    HoneycombParams,
+    # Skeletal (7)
     TrabecularBoneParams,
     OsteochondralParams,
     ArticularCartilageParams,
@@ -1194,35 +1324,30 @@ ScaffoldParams = Union[
     TendonLigamentParams,
     IntervertebralDiscParams,
     HaversianBoneParams,
-    # Organ 6
+    # Organ (6)
     HepaticLobuleParams,
     CardiacPatchParams,
     KidneyTubuleParams,
     LungAlveoliParams,
     PancreaticIsletParams,
     LiverSinusoidParams,
-    # Soft Tissue 4
+    # Soft Tissue (4)
     MultilayerSkinParams,
     SkeletalMuscleParams,
     CorneaParams,
     AdiposeParams,
-    # Tubular 5
+    # Tubular (6)
     BloodVesselParams,
     NerveConduitParams,
     SpinalCordParams,
     BladderParams,
     TracheaParams,
-    # Dental 3
+    VascularPerfusionDishParams,
+    # Dental (3)
     DentinPulpParams,
     EarAuricleParams,
     NasalSeptumParams,
-    # Advanced Lattice 5
-    GyroidParams,
-    SchwarzPParams,
-    OctetTrussParams,
-    VoronoiParams,
-    HoneycombParams,
-    # Microfluidic 3
+    # Microfluidic (3)
     OrganOnChipParams,
     GradientScaffoldParams,
     PerfusableNetworkParams,
@@ -1353,6 +1478,31 @@ DEFAULT_VASCULAR_NETWORK = VascularNetworkParams(
     outer_radius_mm=10.0,
     height_mm=5.0,
     inlet_radius_mm=1.0,
+)
+
+DEFAULT_VASCULAR_PERFUSION_DISH = VascularPerfusionDishParams(
+    type=ScaffoldType.VASCULAR_PERFUSION_DISH,
+    resolution=DEFAULT_RESOLUTION,
+    inlets=4,
+    levels=2,
+    splits=2,
+    spread=0.35,
+    ratio=0.79,
+    cone_angle=60.0,
+    curvature=0.3,
+    bottom_height=0.06,
+    radius_variation=0.25,
+    flip_chance=0.30,
+    z_variation=0.35,
+    angle_variation=0.40,
+    collision_buffer=0.08,
+    even_spread=True,
+    deterministic=False,
+    tips_down=False,
+    outer_radius_mm=4.875,
+    height_mm=2.0,
+    inlet_radius_mm=0.35,
+    seed=42,
 )
 
 DEFAULT_POROUS_DISC = PorousDiscParams(

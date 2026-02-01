@@ -387,6 +387,56 @@ export interface TubularConduitParams extends BaseParams {
   groove_depth_mm?: number;
 }
 
+export interface VascularPerfusionDishParams extends BaseParams {
+  // === Network Structure ===
+  /** Number of inlet branches (1-25) */
+  inlets: number;
+  /** Branching levels (0-8) */
+  levels: number;
+  /** Splits per branch (1-6) */
+  splits: number;
+  /** Branch spread factor (0.1-0.8) */
+  spread: number;
+  /** Branch radius ratio (0.5-0.95, Murray's law = 0.79) */
+  ratio: number;
+  /** Cone angle in degrees (10-180) */
+  cone_angle: number;
+  /** Branch curvature (0-1) */
+  curvature: number;
+  /** Height from bottom where vessels terminate (0.02-1.0) */
+  bottom_height: number;
+
+  // === Variation/Randomness ===
+  /** Radius variation (0-1, as fraction) */
+  radius_variation: number;
+  /** Chance of flipping branch direction (0-0.5) */
+  flip_chance: number;
+  /** Z-axis variation factor (0-0.5) */
+  z_variation: number;
+  /** Angle variation factor (0-0.5) */
+  angle_variation: number;
+  /** Extra buffer for collision detection (0-0.3) */
+  collision_buffer: number;
+
+  // === Behavior Flags ===
+  /** Use even 360° spread vs directional cone spread */
+  even_spread: boolean;
+  /** Use deterministic straight grid-aligned channels */
+  deterministic: boolean;
+  /** Force terminal branch tips to point straight down */
+  tips_down: boolean;
+
+  // === Geometry Dimensions ===
+  /** Outer cylinder radius (mm) */
+  outer_radius_mm: number;
+  /** Total height (mm) */
+  height_mm: number;
+  /** Inlet branch radius (mm) */
+  inlet_radius_mm: number;
+  /** Random seed for reproducibility */
+  seed?: number;
+}
+
 // ============================================================================
 // Default Values
 // ============================================================================
@@ -761,4 +811,32 @@ export const DEFAULT_TUBULAR_CONDUIT: TubularConduitParams = {
   inner_texture: InnerTexture.SMOOTH,
   groove_count: 8,
   groove_depth_mm: 0.15,
+};
+
+export const DEFAULT_VASCULAR_PERFUSION_DISH: VascularPerfusionDishParams = {
+  resolution: 12,
+  // Network structure
+  inlets: 4,
+  levels: 2,
+  splits: 2,
+  spread: 0.35,
+  ratio: 0.79,
+  cone_angle: 60.0,
+  curvature: 0.3,
+  bottom_height: 0.06,
+  // Variation
+  radius_variation: 0.25,
+  flip_chance: 0.30,
+  z_variation: 0.35,
+  angle_variation: 0.40,
+  collision_buffer: 0.08,
+  // Behavior
+  even_spread: true,
+  deterministic: false,
+  tips_down: false,
+  // Geometry
+  outer_radius_mm: 4.875,
+  height_mm: 2.0,
+  inlet_radius_mm: 0.35,
+  seed: 42,
 };

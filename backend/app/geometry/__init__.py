@@ -33,12 +33,13 @@ Soft Tissue (4 types):
 - Cornea (curved dome with lamellae)
 - Adipose (honeycomb structure)
 
-Tubular Organs (5 types):
+Tubular Organs (6 types):
 - Blood vessel (multi-layer vascular graft)
 - Nerve conduit (multi-channel guidance)
 - Spinal cord (gray/white matter zones)
 - Bladder (dome-shaped)
 - Trachea (C-shaped cartilage rings)
+- Vascular perfusion dish (collision-aware branching network)
 
 Dental/Craniofacial (3 types):
 - Dentin-pulp (tooth scaffold)
@@ -75,6 +76,11 @@ from .vascular import (
     generate_vascular_network,
     generate_vascular_network_from_dict,
 )
+from .vascular_perfusion_dish import (
+    VascularPerfusionDishParams,
+    generate_vascular_perfusion_dish,
+    generate_vascular_perfusion_dish_from_dict,
+)
 from .primitives import (
     PrimitiveParams,
     create_cylinder,
@@ -87,6 +93,17 @@ from .primitives import (
     generate_primitive_from_dict,
     SHAPE_CREATORS,
     MODIFICATIONS,
+)
+
+# New primitives module exports (registry-based)
+from .primitives import (
+    get_primitive,
+    list_primitives,
+    get_schema,
+    get_all_schemas,
+    evaluate_csg_tree,
+    apply_transforms,
+    PRIMITIVES,
 )
 from .tubular import (
     TubularConduitParams,
@@ -257,6 +274,10 @@ __all__ = [
     "make_cyl",
     "generate_vascular_network",
     "generate_vascular_network_from_dict",
+    # Vascular perfusion dish
+    "VascularPerfusionDishParams",
+    "generate_vascular_perfusion_dish",
+    "generate_vascular_perfusion_dish_from_dict",
     # Primitives
     "PrimitiveParams",
     "create_cylinder",
@@ -269,6 +290,14 @@ __all__ = [
     "generate_primitive_from_dict",
     "SHAPE_CREATORS",
     "MODIFICATIONS",
+    # New primitives module (registry-based)
+    "get_primitive",
+    "list_primitives",
+    "get_schema",
+    "get_all_schemas",
+    "evaluate_csg_tree",
+    "apply_transforms",
+    "PRIMITIVES",
     # Tubular conduit
     "TubularConduitParams",
     "generate_tubular_conduit",

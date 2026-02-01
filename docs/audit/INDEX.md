@@ -1,20 +1,20 @@
 # MorphoStruct Scaffold Audit Tracker
 
 **Started**: 2026-01-30
-**Total Scaffolds**: 38
+**Total Scaffolds**: 39 + 27 primitives
 
 ## Progress Summary
 
 | Status | Count |
 |--------|-------|
-| Audited | 38/38 |
-| Pending | 0/38 |
+| Audited | 39/39 |
+| Pending | 0/39 |
 
 ## Category Progress
 
 | Category | Audited | Total | File | Status |
 |----------|---------|-------|------|--------|
-| [TUBULAR](./TUBULAR.md) | 6/6 | 6 | `TUBULAR.md` | ✅ COMPLETE |
+| [TUBULAR](./TUBULAR.md) | 7/7 | 7 | `TUBULAR.md` | ✅ COMPLETE |
 | [ORGAN](./ORGAN.md) | 6/6 | 6 | `ORGAN.md` | ✅ COMPLETE |
 | [SKELETAL](./SKELETAL.md) | 7/7 | 7 | `SKELETAL.md` | ✅ COMPLETE |
 | [SOFT_TISSUE](./SOFT_TISSUE.md) | 4/4 | 4 | `SOFT_TISSUE.md` | ✅ COMPLETE |
@@ -22,21 +22,23 @@
 | [DENTAL](./DENTAL.md) | 3/3 | 3 | `DENTAL.md` | ✅ COMPLETE |
 | [LATTICE](./LATTICE.md) | 6/6 | 6 | `LATTICE.md` | ✅ COMPLETE |
 | [LEGACY](./LEGACY.md) | 3/3 | 3 | `LEGACY.md` | ✅ COMPLETE |
+| [PRIMITIVES](./PRIMITIVES.md) | 27/27 | 27 | `PRIMITIVES.md` | ✅ NEW |
 
 ## Aggregate Statistics (All 8 Categories Complete)
 
 | Metric | Total | Per-Category Breakdown |
 |--------|-------|------------------------|
-| Backend Params | 1276 | TUBULAR: 243, ORGAN: 216, SKELETAL: 306, SOFT_TISSUE: 139, MICROFLUIDIC: 101, DENTAL: 117, LEGACY: 25, LATTICE: 129 |
-| Frontend Unique Props | 1277 | Backend + 1 frontend-only (porous_disc.porosity_target) |
+| Backend Params | 1299 | TUBULAR: 266, ORGAN: 216, SKELETAL: 306, SOFT_TISSUE: 139, MICROFLUIDIC: 101, DENTAL: 117, LEGACY: 25, LATTICE: 129 |
+| Frontend Unique Props | 1300 | Backend + 1 frontend-only (porous_disc.porosity_target) |
 | Frontend Legacy Aliases | 70 | TUBULAR: 11, ORGAN: 11, SKELETAL: 7, SOFT_TISSUE: 0, MICROFLUIDIC: 13, DENTAL: 0, LEGACY: 3, LATTICE: 25 |
-| Frontend Total Props | 1347 | 1277 unique + 70 legacy aliases |
-| ParamMeta UI Controls | 1276 | All backend params have UI controls |
+| Frontend Total Props | 1370 | 1300 unique + 70 legacy aliases |
+| ParamMeta UI Controls | 1299 | All backend params have UI controls |
 | Dead Code Params | 0 | All fixed |
 | Stats-Only (FEA) | 85 | TUBULAR: 3, ORGAN: 3, SKELETAL: 14, SOFT_TISSUE: 8, MICROFLUIDIC: 13, DENTAL: 12, LEGACY: 0, LATTICE: 32 |
-| Alive (Used) Params | 1191 | 1276 - 85 FEA/reference specs |
-| Bio Verified | 1276 | All defaults verified |
+| Alive (Used) Params | 1214 | 1299 - 85 FEA/reference specs |
+| Bio Verified | 1299 | All defaults verified |
 | Bio Unverified | 0 | |
+| New Primitives | 27 | 4 basic + 8 geometric + 7 architectural + 8 organic |
 
 ### Frontend Legacy Alias Mapping
 | Scaffold | Alias | Maps To | Backend Status |
@@ -152,5 +154,6 @@
 36. ✅ octet_truss (LATTICE) - 22 params (0 dead code, 6 stats-only: relative_density, pore_size, d_over_pore, FEA targets)
 37. ✅ schwarz_p (LATTICE) - 23 params (0 dead code, 8 stats-only: porosity, pore sizes, wall thickness, permeability, stability, modulus, seed)
 38. ✅ voronoi (LATTICE) - 20 params (0 dead code, 3 stats-only: target_porosity, random_coefficient, irregularity)
+39. ✅ vascular_perfusion_dish (TUBULAR) - 23 params (0 dead code, collision-aware vascular network)
 
-### All 38 Scaffolds Complete! ✅
+### All 39 Scaffolds Complete! ✅

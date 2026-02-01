@@ -394,6 +394,37 @@ export const TUBULAR_CONDUIT_META: Record<string, ParamMeta> = {
   resolution: { type: 'number', label: 'Resolution', min: 8, max: 64, step: 2, description: 'Cylinder segments', advanced: true },
 };
 
+export const VASCULAR_PERFUSION_DISH_META: Record<string, ParamMeta> = {
+  // === Network Structure ===
+  inlets: { type: 'number', label: 'Inlets', min: 1, max: 25, step: 1, description: 'Number of inlet branches' },
+  levels: { type: 'number', label: 'Branching Levels', min: 0, max: 8, step: 1, description: 'Depth of branching hierarchy (0 = straight)' },
+  splits: { type: 'number', label: 'Splits per Branch', min: 1, max: 6, step: 1, description: 'Number of child branches per split' },
+  spread: { type: 'number', label: 'Spread', min: 0.1, max: 0.8, step: 0.05, description: 'Horizontal spread factor' },
+  ratio: { type: 'number', label: 'Radius Ratio', min: 0.5, max: 0.95, step: 0.01, description: "Child/parent radius ratio (Murray's law = 0.79)" },
+  cone_angle: { type: 'number', label: 'Cone Angle', min: 10, max: 180, step: 5, unit: '°', description: 'Branching cone angle' },
+  curvature: { type: 'number', label: 'Curvature', min: 0, max: 1, step: 0.05, description: 'Branch curve intensity' },
+  bottom_height: { type: 'number', label: 'Bottom Height', min: 0.02, max: 1, step: 0.02, description: 'Height from bottom where vessels terminate' },
+
+  // === Variation/Randomness ===
+  radius_variation: { type: 'number', label: 'Radius Variation', min: 0, max: 1, step: 0.05, description: 'Random radius variation (0-100%)', advanced: true },
+  flip_chance: { type: 'number', label: 'Flip Chance', min: 0, max: 0.5, step: 0.05, description: 'Probability of flipping branch direction', advanced: true },
+  z_variation: { type: 'number', label: 'Z-axis Variation', min: 0, max: 0.5, step: 0.05, description: 'Random Z-axis variation', advanced: true },
+  angle_variation: { type: 'number', label: 'Angle Variation', min: 0, max: 0.5, step: 0.05, description: 'Random angle variation', advanced: true },
+  collision_buffer: { type: 'number', label: 'Collision Buffer', min: 0, max: 0.3, step: 0.01, description: 'Buffer distance for collision detection' },
+
+  // === Behavior Flags ===
+  even_spread: { type: 'boolean', label: 'Even Spread', description: 'Use evenly distributed inlet positioning (vs directional cone)', advanced: true },
+  deterministic: { type: 'boolean', label: 'Deterministic', description: 'Use deterministic straight grid-aligned channels', advanced: true },
+  tips_down: { type: 'boolean', label: 'Tips Down', description: 'Terminal branches curve to point downward' },
+
+  // === Geometry Dimensions ===
+  outer_radius_mm: { type: 'number', label: 'Outer Radius', min: 1, max: 20, step: 0.5, unit: 'mm', description: 'Outer cylinder radius' },
+  height_mm: { type: 'number', label: 'Height', min: 0.5, max: 10, step: 0.1, unit: 'mm', description: 'Total scaffold height' },
+  inlet_radius_mm: { type: 'number', label: 'Inlet Radius', min: 0.1, max: 2, step: 0.05, unit: 'mm', description: 'Inlet channel radius' },
+  seed: { type: 'number', label: 'Random Seed', min: 0, max: 99999, step: 1, description: 'Seed for reproducible randomization', advanced: true },
+  resolution: { type: 'number', label: 'Resolution', min: 6, max: 32, step: 2, description: 'Mesh resolution (affects quality and performance)', advanced: true },
+};
+
 // Combined export for tubular scaffold types
 export const TUBULAR_PARAMETER_META: Partial<Record<ScaffoldType, Record<string, ParamMeta>>> = {
   [ScaffoldType.BLOOD_VESSEL]: BLOOD_VESSEL_META,
@@ -402,4 +433,5 @@ export const TUBULAR_PARAMETER_META: Partial<Record<ScaffoldType, Record<string,
   [ScaffoldType.BLADDER]: BLADDER_META,
   [ScaffoldType.TRACHEA]: TRACHEA_META,
   [ScaffoldType.TUBULAR_CONDUIT]: TUBULAR_CONDUIT_META,
+  [ScaffoldType.VASCULAR_PERFUSION_DISH]: VASCULAR_PERFUSION_DISH_META,
 };

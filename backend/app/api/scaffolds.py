@@ -22,12 +22,25 @@ from app.config import get_settings
 from app.models.scaffold import (
     ScaffoldType,
     ScaffoldParams,
-    # Original 5
+    # Legacy 3
     VascularNetworkParams,
     PorousDiscParams,
-    TubularConduitParams,
-    LatticeParams,
     PrimitiveParams,
+    # Tubular 7
+    TubularConduitParams,
+    VascularPerfusionDishParams,
+    BloodVesselParams,
+    NerveConduitParams,
+    SpinalCordParams,
+    BladderParams,
+    TracheaParams,
+    # Organ 6
+    HepaticLobuleParams,
+    CardiacPatchParams,
+    KidneyTubuleParams,
+    LungAlveoliParams,
+    PancreaticIsletParams,
+    LiverSinusoidParams,
     # Skeletal 7
     TrabecularBoneParams,
     OsteochondralParams,
@@ -36,29 +49,17 @@ from app.models.scaffold import (
     TendonLigamentParams,
     IntervertebralDiscParams,
     HaversianBoneParams,
-    # Organ 6
-    HepaticLobuleParams,
-    CardiacPatchParams,
-    KidneyTubuleParams,
-    LungAlveoliParams,
-    PancreaticIsletParams,
-    LiverSinusoidParams,
     # Soft Tissue 4
     MultilayerSkinParams,
     SkeletalMuscleParams,
     CorneaParams,
     AdiposeParams,
-    # Tubular 5
-    BloodVesselParams,
-    NerveConduitParams,
-    SpinalCordParams,
-    BladderParams,
-    TracheaParams,
     # Dental 3
     DentinPulpParams,
     EarAuricleParams,
     NasalSeptumParams,
-    # Advanced Lattice 5
+    # Lattice 6
+    LatticeParams,
     GyroidParams,
     SchwarzPParams,
     OctetTrussParams,
@@ -82,26 +83,28 @@ from app.models.scaffold import (
     NetworkType,
 )
 
-# Original geometry imports
+# Legacy geometry imports
 from app.geometry import (
+    # Legacy 3
     generate_vascular_network_from_dict,
     generate_porous_disc_from_dict,
-    generate_tubular_conduit_from_dict,
-    generate_lattice_from_dict,
     generate_primitive_from_dict,
     check_manifold_available,
-    # Advanced lattice (TPMS and strut-based)
-    generate_gyroid_from_dict,
-    generate_schwarz_p_from_dict,
-    generate_octet_truss_from_dict,
-    generate_voronoi_from_dict,
-    generate_honeycomb_from_dict,
-    # Tubular organ generators
+    # Tubular 7
+    generate_tubular_conduit_from_dict,
+    generate_vascular_perfusion_dish_from_dict,
     generate_blood_vessel_from_dict,
     generate_nerve_conduit_from_dict,
     generate_spinal_cord_from_dict,
     generate_bladder_from_dict,
     generate_trachea_from_dict,
+    # Lattice 6
+    generate_lattice_from_dict,
+    generate_gyroid_from_dict,
+    generate_schwarz_p_from_dict,
+    generate_octet_truss_from_dict,
+    generate_voronoi_from_dict,
+    generate_honeycomb_from_dict,
 )
 
 # Skeletal tissue generators
@@ -251,14 +254,14 @@ class PresetsResponse(BaseModel):
 
 PRESETS: List[PresetInfo] = [
     # -------------------------------------------------------------------------
-    # Original Presets
+    # Legacy Presets (3 types: vascular_network, porous_disc, primitive)
     # -------------------------------------------------------------------------
     PresetInfo(
         id="vascular_4inlet",
         name="4-Inlet Vascular Network",
         type=ScaffoldType.VASCULAR_NETWORK,
         description="Standard vascular network with 4 inlet channels",
-        category="vascular",
+        category="legacy",
         params={
             "inlets": 4,
             "levels": 3,
@@ -278,7 +281,7 @@ PRESETS: List[PresetInfo] = [
         name="9-Inlet Vascular Network",
         type=ScaffoldType.VASCULAR_NETWORK,
         description="High-density vascular network with 9 inlet channels",
-        category="vascular",
+        category="legacy",
         params={
             "inlets": 9,
             "levels": 2,
@@ -298,7 +301,7 @@ PRESETS: List[PresetInfo] = [
         name="Standard Porous Disc",
         type=ScaffoldType.POROUS_DISC,
         description="Hexagonal pore pattern disc for general tissue engineering",
-        category="general",
+        category="legacy",
         params={
             "diameter_mm": 10.0,
             "height_mm": 2.0,
@@ -313,7 +316,7 @@ PRESETS: List[PresetInfo] = [
         name="Fine Pore Disc",
         type=ScaffoldType.POROUS_DISC,
         description="Smaller pores for cell seeding applications",
-        category="general",
+        category="legacy",
         params={
             "diameter_mm": 8.0,
             "height_mm": 1.5,
@@ -324,8 +327,24 @@ PRESETS: List[PresetInfo] = [
         },
     ),
     PresetInfo(
+        id="primitive_hollow_cylinder",
+        name="Hollow Cylinder",
+        type=ScaffoldType.PRIMITIVE,
+        description="Basic hollow cylindrical scaffold",
+        category="legacy",
+        params={
+            "shape": "cylinder",
+            "dimensions": {"radius_mm": 5.0, "height_mm": 10.0},
+            "modifications": [{"operation": "shell", "params": {"wall_thickness_mm": 1.0}}],
+            "resolution": 32,
+        },
+    ),
+    # -------------------------------------------------------------------------
+    # Tubular Presets (7 types: tubular_conduit, vascular_perfusion_dish, blood_vessel, nerve_conduit, spinal_cord, bladder, trachea)
+    # -------------------------------------------------------------------------
+    PresetInfo(
         id="tubular_nerve",
-        name="Nerve Conduit",
+        name="Simple Nerve Conduit",
         type=ScaffoldType.TUBULAR_CONDUIT,
         description="Grooved nerve guidance conduit",
         category="tubular",
@@ -340,7 +359,7 @@ PRESETS: List[PresetInfo] = [
     ),
     PresetInfo(
         id="tubular_vascular",
-        name="Vascular Graft",
+        name="Simple Vascular Graft",
         type=ScaffoldType.TUBULAR_CONDUIT,
         description="Porous vascular graft scaffold",
         category="tubular",
@@ -353,48 +372,67 @@ PRESETS: List[PresetInfo] = [
         },
     ),
     PresetInfo(
-        id="lattice_cubic",
-        name="Cubic Lattice",
-        type=ScaffoldType.LATTICE,
-        description="Simple cubic lattice structure",
-        category="lattice",
+        id="vascular_perfusion_dish_4inlet",
+        name="4-Inlet Vascular Perfusion Dish",
+        type=ScaffoldType.VASCULAR_PERFUSION_DISH,
+        description="Vascular network with collision detection for non-overlapping branches",
+        category="tubular",
         params={
-            "bounding_box": {"x": 10, "y": 10, "z": 10},
-            "unit_cell": "cubic",
-            "cell_size_mm": 2.0,
-            "strut_diameter_mm": 0.5,
-            "resolution": 8,
+            "inlets": 4,
+            "levels": 2,
+            "splits": 2,
+            "spread": 0.35,
+            "ratio": 0.79,
+            "cone_angle": 60.0,
+            "curvature": 0.3,
+            "bottom_height": 0.06,
+            "radius_variation": 0.25,
+            "flip_chance": 0.30,
+            "z_variation": 0.35,
+            "angle_variation": 0.40,
+            "collision_buffer": 0.08,
+            "even_spread": True,
+            "deterministic": False,
+            "tips_down": False,
+            "outer_radius_mm": 4.875,
+            "height_mm": 2.0,
+            "inlet_radius_mm": 0.35,
+            "seed": 42,
+            "resolution": 12,
         },
     ),
     PresetInfo(
-        id="lattice_bcc",
-        name="BCC Lattice",
-        type=ScaffoldType.LATTICE,
-        description="Body-centered cubic lattice with higher mechanical strength",
-        category="lattice",
+        id="vascular_perfusion_dish_deterministic",
+        name="Deterministic Vascular Perfusion Dish",
+        type=ScaffoldType.VASCULAR_PERFUSION_DISH,
+        description="Grid-aligned vascular channels with no randomization",
+        category="tubular",
         params={
-            "bounding_box": {"x": 10, "y": 10, "z": 10},
-            "unit_cell": "bcc",
-            "cell_size_mm": 2.5,
-            "strut_diameter_mm": 0.4,
-            "resolution": 8,
-        },
-    ),
-    PresetInfo(
-        id="primitive_hollow_cylinder",
-        name="Hollow Cylinder",
-        type=ScaffoldType.PRIMITIVE,
-        description="Basic hollow cylindrical scaffold",
-        category="general",
-        params={
-            "shape": "cylinder",
-            "dimensions": {"radius_mm": 5.0, "height_mm": 10.0},
-            "modifications": [{"operation": "shell", "params": {"wall_thickness_mm": 1.0}}],
-            "resolution": 32,
+            "inlets": 9,
+            "levels": 2,
+            "splits": 2,
+            "spread": 0.35,
+            "ratio": 0.79,
+            "cone_angle": 60.0,
+            "curvature": 0.0,
+            "bottom_height": 0.06,
+            "radius_variation": 0.0,
+            "flip_chance": 0.0,
+            "z_variation": 0.0,
+            "angle_variation": 0.0,
+            "collision_buffer": 0.08,
+            "even_spread": True,
+            "deterministic": True,
+            "tips_down": True,
+            "outer_radius_mm": 4.875,
+            "height_mm": 2.0,
+            "inlet_radius_mm": 0.35,
+            "seed": 42,
+            "resolution": 12,
         },
     ),
     # -------------------------------------------------------------------------
-    # Skeletal Tissue Presets
+    # Skeletal Tissue Presets (7 types)
     # -------------------------------------------------------------------------
     PresetInfo(
         id="trabecular_bone_femur",
@@ -583,7 +621,7 @@ PRESETS: List[PresetInfo] = [
         },
     ),
     # -------------------------------------------------------------------------
-    # Tubular Organ Presets
+    # Tubular Presets (continued: blood_vessel, nerve_conduit, trachea, etc.)
     # -------------------------------------------------------------------------
     PresetInfo(
         id="blood_vessel_small",
@@ -678,8 +716,36 @@ PRESETS: List[PresetInfo] = [
         },
     ),
     # -------------------------------------------------------------------------
-    # Advanced Lattice Presets (TPMS)
+    # Lattice Presets (6 types: basic, gyroid, schwarz_p, octet_truss, voronoi, honeycomb)
     # -------------------------------------------------------------------------
+    PresetInfo(
+        id="lattice_cubic",
+        name="Cubic Lattice",
+        type=ScaffoldType.LATTICE,
+        description="Simple cubic lattice structure",
+        category="lattice",
+        params={
+            "bounding_box": {"x": 10, "y": 10, "z": 10},
+            "unit_cell": "cubic",
+            "cell_size_mm": 2.0,
+            "strut_diameter_mm": 0.5,
+            "resolution": 8,
+        },
+    ),
+    PresetInfo(
+        id="lattice_bcc",
+        name="BCC Lattice",
+        type=ScaffoldType.LATTICE,
+        description="Body-centered cubic lattice with higher mechanical strength",
+        category="lattice",
+        params={
+            "bounding_box": {"x": 10, "y": 10, "z": 10},
+            "unit_cell": "bcc",
+            "cell_size_mm": 2.5,
+            "strut_diameter_mm": 0.4,
+            "resolution": 8,
+        },
+    ),
     PresetInfo(
         id="gyroid_standard",
         name="Gyroid TPMS",
@@ -883,6 +949,19 @@ def _convert_params_for_generator(scaffold_type: ScaffoldType, params: Dict[str,
         if "inner_radius" not in converted and "outer_radius" in converted:
             converted["inner_radius"] = converted["outer_radius"] * 0.915
 
+    elif scaffold_type == ScaffoldType.VASCULAR_PERFUSION_DISH:
+        # Map outer_radius_mm to outer_radius for the generator
+        if "outer_radius_mm" in converted:
+            converted["outer_radius"] = converted.pop("outer_radius_mm")
+        if "height_mm" in converted:
+            converted["height"] = converted.pop("height_mm")
+            converted["scaffold_height"] = converted["height"] * 0.96
+        if "inlet_radius_mm" in converted:
+            converted["inlet_radius"] = converted.pop("inlet_radius_mm")
+        # Map inner_radius if not specified
+        if "inner_radius" not in converted and "outer_radius" in converted:
+            converted["inner_radius"] = converted["outer_radius"] * 0.94
+
     elif scaffold_type == ScaffoldType.TUBULAR_CONDUIT:
         # Handle groove_count for grooved texture
         if converted.get("inner_texture") == "grooved" and "groove_count" not in converted:
@@ -981,7 +1060,7 @@ def _generate_scaffold(scaffold_type: ScaffoldType, params: Dict[str, Any], prev
     converted_params = _convert_params_for_generator(scaffold_type, params)
 
     # -------------------------------------------------------------------------
-    # Original 5 types
+    # Legacy (3 types: vascular_network, porous_disc, primitive)
     # -------------------------------------------------------------------------
     if scaffold_type == ScaffoldType.VASCULAR_NETWORK:
         # Vascular returns (body, channels, result) - we want result
@@ -998,17 +1077,65 @@ def _generate_scaffold(scaffold_type: ScaffoldType, params: Dict[str, Any], prev
     elif scaffold_type == ScaffoldType.POROUS_DISC:
         return generate_porous_disc_from_dict(converted_params)
 
-    elif scaffold_type == ScaffoldType.TUBULAR_CONDUIT:
-        return generate_tubular_conduit_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.LATTICE:
-        return generate_lattice_from_dict(converted_params)
-
     elif scaffold_type == ScaffoldType.PRIMITIVE:
         return generate_primitive_from_dict(converted_params)
 
     # -------------------------------------------------------------------------
-    # Skeletal tissue (7 types)
+    # Tubular (7 types: tubular_conduit, vascular_perfusion_dish, blood_vessel, nerve_conduit, spinal_cord, bladder, trachea)
+    # -------------------------------------------------------------------------
+    elif scaffold_type == ScaffoldType.TUBULAR_CONDUIT:
+        return generate_tubular_conduit_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.VASCULAR_PERFUSION_DISH:
+        # Vascular perfusion dish returns (body, channels, result) - we want result
+        _, _, manifold = generate_vascular_perfusion_dish_from_dict(converted_params)
+        mesh = manifold.to_mesh()
+        volume = manifold.volume() if hasattr(manifold, "volume") else 0
+        stats = {
+            "triangle_count": len(mesh.tri_verts) if hasattr(mesh, "tri_verts") else 0,
+            "volume_mm3": volume,
+            "scaffold_type": "vascular_perfusion_dish",
+        }
+        return manifold, stats
+
+    elif scaffold_type == ScaffoldType.BLOOD_VESSEL:
+        return generate_blood_vessel_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.NERVE_CONDUIT:
+        return generate_nerve_conduit_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.SPINAL_CORD:
+        return generate_spinal_cord_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.BLADDER:
+        return generate_bladder_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.TRACHEA:
+        return generate_trachea_from_dict(converted_params)
+
+    # -------------------------------------------------------------------------
+    # Organ (6 types)
+    # -------------------------------------------------------------------------
+    elif scaffold_type == ScaffoldType.HEPATIC_LOBULE:
+        return generate_hepatic_lobule_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.CARDIAC_PATCH:
+        return generate_cardiac_patch_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.KIDNEY_TUBULE:
+        return generate_kidney_tubule_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.LUNG_ALVEOLI:
+        return generate_lung_alveoli_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.PANCREATIC_ISLET:
+        return generate_pancreatic_islet_from_dict(converted_params)
+
+    elif scaffold_type == ScaffoldType.LIVER_SINUSOID:
+        return generate_liver_sinusoid_from_dict(converted_params)
+
+    # -------------------------------------------------------------------------
+    # Skeletal (7 types)
     # -------------------------------------------------------------------------
     elif scaffold_type == ScaffoldType.TRABECULAR_BONE:
         return generate_trabecular_bone_from_dict(converted_params)
@@ -1032,28 +1159,7 @@ def _generate_scaffold(scaffold_type: ScaffoldType, params: Dict[str, Any], prev
         return generate_haversian_bone_from_dict(converted_params)
 
     # -------------------------------------------------------------------------
-    # Organ-specific (6 types)
-    # -------------------------------------------------------------------------
-    elif scaffold_type == ScaffoldType.HEPATIC_LOBULE:
-        return generate_hepatic_lobule_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.CARDIAC_PATCH:
-        return generate_cardiac_patch_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.KIDNEY_TUBULE:
-        return generate_kidney_tubule_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.LUNG_ALVEOLI:
-        return generate_lung_alveoli_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.PANCREATIC_ISLET:
-        return generate_pancreatic_islet_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.LIVER_SINUSOID:
-        return generate_liver_sinusoid_from_dict(converted_params)
-
-    # -------------------------------------------------------------------------
-    # Soft tissue (4 types)
+    # Soft Tissue (4 types)
     # -------------------------------------------------------------------------
     elif scaffold_type == ScaffoldType.MULTILAYER_SKIN:
         return generate_multilayer_skin_from_dict(converted_params)
@@ -1068,25 +1174,7 @@ def _generate_scaffold(scaffold_type: ScaffoldType, params: Dict[str, Any], prev
         return generate_adipose_tissue_from_dict(converted_params)
 
     # -------------------------------------------------------------------------
-    # Tubular organs (5 types)
-    # -------------------------------------------------------------------------
-    elif scaffold_type == ScaffoldType.BLOOD_VESSEL:
-        return generate_blood_vessel_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.NERVE_CONDUIT:
-        return generate_nerve_conduit_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.SPINAL_CORD:
-        return generate_spinal_cord_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.BLADDER:
-        return generate_bladder_from_dict(converted_params)
-
-    elif scaffold_type == ScaffoldType.TRACHEA:
-        return generate_trachea_from_dict(converted_params)
-
-    # -------------------------------------------------------------------------
-    # Dental/craniofacial (3 types)
+    # Dental (3 types)
     # -------------------------------------------------------------------------
     elif scaffold_type == ScaffoldType.DENTIN_PULP:
         return generate_dentin_pulp_from_dict(converted_params)
@@ -1098,8 +1186,11 @@ def _generate_scaffold(scaffold_type: ScaffoldType, params: Dict[str, Any], prev
         return generate_nasal_septum_from_dict(converted_params)
 
     # -------------------------------------------------------------------------
-    # Advanced lattice (5 types)
+    # Lattice (6 types: basic, gyroid, schwarz_p, octet_truss, voronoi, honeycomb)
     # -------------------------------------------------------------------------
+    elif scaffold_type == ScaffoldType.LATTICE:
+        return generate_lattice_from_dict(converted_params)
+
     elif scaffold_type == ScaffoldType.GYROID:
         return generate_gyroid_from_dict(converted_params)
 
@@ -1143,7 +1234,7 @@ def _validate_params(scaffold_type: ScaffoldType, params: Dict[str, Any]) -> tup
 
     try:
         # -------------------------------------------------------------------------
-        # Original 5 types
+        # Legacy (3 types: vascular_network, porous_disc, primitive)
         # -------------------------------------------------------------------------
         if scaffold_type == ScaffoldType.VASCULAR_NETWORK:
             VascularNetworkParams(**params)
@@ -1158,23 +1249,83 @@ def _validate_params(scaffold_type: ScaffoldType, params: Dict[str, Any]) -> tup
             if pore_diameter < 100:
                 warnings.append("Pore diameter < 100um may be difficult to print")
 
+        elif scaffold_type == ScaffoldType.PRIMITIVE:
+            PrimitiveParams(**params)
+
+        # -------------------------------------------------------------------------
+        # Tubular (7 types: tubular_conduit, vascular_perfusion_dish, blood_vessel, nerve_conduit, spinal_cord, bladder, trachea)
+        # -------------------------------------------------------------------------
         elif scaffold_type == ScaffoldType.TUBULAR_CONDUIT:
             TubularConduitParams(**params)
             wall = params.get("wall_thickness_mm", 1.0)
             if wall < 0.4:
                 warnings.append("Wall thickness < 0.4mm is at minimum printable size")
 
-        elif scaffold_type == ScaffoldType.LATTICE:
-            LatticeParams(**params)
-            strut = params.get("strut_diameter_mm", 0.5)
-            if strut < 0.3:
-                warnings.append("Strut diameter < 0.3mm may be difficult to print")
+        elif scaffold_type == ScaffoldType.VASCULAR_PERFUSION_DISH:
+            VascularPerfusionDishParams(**params)
+            if params.get("levels", 2) > 5:
+                warnings.append("Branching levels > 5 may take a long time to generate")
+            if params.get("inlets", 4) > 16:
+                warnings.append("More than 16 inlets may produce very dense geometry")
+            if params.get("collision_buffer", 0.08) < 0.03:
+                warnings.append("Collision buffer < 0.03 may cause overlapping branches")
 
-        elif scaffold_type == ScaffoldType.PRIMITIVE:
-            PrimitiveParams(**params)
+        elif scaffold_type == ScaffoldType.BLOOD_VESSEL:
+            BloodVesselParams(**params)
+            wall = params.get("wall_thickness_mm", 1.0)
+            if wall < 0.5:
+                warnings.append("Wall thickness < 0.5mm may be fragile for blood vessel")
+
+        elif scaffold_type == ScaffoldType.NERVE_CONDUIT:
+            NerveConduitParams(**params)
+
+        elif scaffold_type == ScaffoldType.SPINAL_CORD:
+            SpinalCordParams(**params)
+
+        elif scaffold_type == ScaffoldType.BLADDER:
+            BladderParams(**params)
+
+        elif scaffold_type == ScaffoldType.TRACHEA:
+            TracheaParams(**params)
+            ring = params.get("ring_thickness_mm", 3.0)
+            if ring < 2.0:
+                warnings.append("Ring thickness < 2mm may not provide adequate support")
 
         # -------------------------------------------------------------------------
-        # Skeletal tissue (7 types)
+        # Organ (6 types)
+        # -------------------------------------------------------------------------
+        elif scaffold_type == ScaffoldType.HEPATIC_LOBULE:
+            HepaticLobuleParams(**params)
+            wall = params.get("wall_thickness", 0.1)
+            if wall < 0.08:
+                warnings.append("Wall thickness < 0.08mm may be difficult to print")
+
+        elif scaffold_type == ScaffoldType.CARDIAC_PATCH:
+            CardiacPatchParams(**params)
+            fiber = params.get("fiber_diameter", 100)
+            if fiber < 80:
+                warnings.append("Fiber diameter < 80um may be difficult to print")
+
+        elif scaffold_type == ScaffoldType.KIDNEY_TUBULE:
+            KidneyTubuleParams(**params)
+
+        elif scaffold_type == ScaffoldType.LUNG_ALVEOLI:
+            LungAlveoliParams(**params)
+            alveoli = params.get("alveoli_diameter", 200)
+            if alveoli < 150:
+                warnings.append("Alveoli diameter < 150um may be difficult to print")
+
+        elif scaffold_type == ScaffoldType.PANCREATIC_ISLET:
+            PancreaticIsletParams(**params)
+
+        elif scaffold_type == ScaffoldType.LIVER_SINUSOID:
+            LiverSinusoidParams(**params)
+            sinusoid = params.get("sinusoid_diameter", 20)
+            if sinusoid < 15:
+                warnings.append("Sinusoid diameter < 15um may be difficult to print")
+
+        # -------------------------------------------------------------------------
+        # Skeletal (7 types)
         # -------------------------------------------------------------------------
         elif scaffold_type == ScaffoldType.TRABECULAR_BONE:
             TrabecularBoneParams(**params)
@@ -1210,40 +1361,7 @@ def _validate_params(scaffold_type: ScaffoldType, params: Dict[str, Any]) -> tup
                 warnings.append("Canal diameter < 30um may be difficult to print")
 
         # -------------------------------------------------------------------------
-        # Organ-specific (6 types)
-        # -------------------------------------------------------------------------
-        elif scaffold_type == ScaffoldType.HEPATIC_LOBULE:
-            HepaticLobuleParams(**params)
-            wall = params.get("wall_thickness", 0.1)
-            if wall < 0.08:
-                warnings.append("Wall thickness < 0.08mm may be difficult to print")
-
-        elif scaffold_type == ScaffoldType.CARDIAC_PATCH:
-            CardiacPatchParams(**params)
-            fiber = params.get("fiber_diameter", 100)
-            if fiber < 80:
-                warnings.append("Fiber diameter < 80um may be difficult to print")
-
-        elif scaffold_type == ScaffoldType.KIDNEY_TUBULE:
-            KidneyTubuleParams(**params)
-
-        elif scaffold_type == ScaffoldType.LUNG_ALVEOLI:
-            LungAlveoliParams(**params)
-            alveoli = params.get("alveoli_diameter", 200)
-            if alveoli < 150:
-                warnings.append("Alveoli diameter < 150um may be difficult to print")
-
-        elif scaffold_type == ScaffoldType.PANCREATIC_ISLET:
-            PancreaticIsletParams(**params)
-
-        elif scaffold_type == ScaffoldType.LIVER_SINUSOID:
-            LiverSinusoidParams(**params)
-            sinusoid = params.get("sinusoid_diameter", 20)
-            if sinusoid < 15:
-                warnings.append("Sinusoid diameter < 15um may be difficult to print")
-
-        # -------------------------------------------------------------------------
-        # Soft tissue (4 types)
+        # Soft Tissue (4 types)
         # -------------------------------------------------------------------------
         elif scaffold_type == ScaffoldType.MULTILAYER_SKIN:
             MultilayerSkinParams(**params)
@@ -1264,31 +1382,7 @@ def _validate_params(scaffold_type: ScaffoldType, params: Dict[str, Any]) -> tup
             AdiposeParams(**params)
 
         # -------------------------------------------------------------------------
-        # Tubular organs (5 types)
-        # -------------------------------------------------------------------------
-        elif scaffold_type == ScaffoldType.BLOOD_VESSEL:
-            BloodVesselParams(**params)
-            wall = params.get("wall_thickness_mm", 1.0)
-            if wall < 0.5:
-                warnings.append("Wall thickness < 0.5mm may be fragile for blood vessel")
-
-        elif scaffold_type == ScaffoldType.NERVE_CONDUIT:
-            NerveConduitParams(**params)
-
-        elif scaffold_type == ScaffoldType.SPINAL_CORD:
-            SpinalCordParams(**params)
-
-        elif scaffold_type == ScaffoldType.BLADDER:
-            BladderParams(**params)
-
-        elif scaffold_type == ScaffoldType.TRACHEA:
-            TracheaParams(**params)
-            ring = params.get("ring_thickness_mm", 3.0)
-            if ring < 2.0:
-                warnings.append("Ring thickness < 2mm may not provide adequate support")
-
-        # -------------------------------------------------------------------------
-        # Dental/craniofacial (3 types)
+        # Dental (3 types)
         # -------------------------------------------------------------------------
         elif scaffold_type == ScaffoldType.DENTIN_PULP:
             DentinPulpParams(**params)
@@ -1303,8 +1397,14 @@ def _validate_params(scaffold_type: ScaffoldType, params: Dict[str, Any]) -> tup
             NasalSeptumParams(**params)
 
         # -------------------------------------------------------------------------
-        # Advanced lattice (5 types)
+        # Lattice (6 types: basic, gyroid, schwarz_p, octet_truss, voronoi, honeycomb)
         # -------------------------------------------------------------------------
+        elif scaffold_type == ScaffoldType.LATTICE:
+            LatticeParams(**params)
+            strut = params.get("strut_diameter_mm", 0.5)
+            if strut < 0.3:
+                warnings.append("Strut diameter < 0.3mm may be difficult to print")
+
         elif scaffold_type == ScaffoldType.GYROID:
             GyroidParams(**params)
             wall = params.get("wall_thickness_mm", 0.3)
@@ -1592,13 +1692,26 @@ async def list_scaffold_types() -> List[Dict[str, str]]:
     List all supported scaffold types with descriptions.
     """
     type_descriptions = {
-        # Original
+        # Legacy (3)
         "vascular_network": "Branching vascular network following Murray's law",
         "porous_disc": "Cylindrical disc with patterned pores",
-        "tubular_conduit": "Hollow tube with optional surface texturing",
-        "lattice": "Periodic lattice structure (cubic or BCC)",
         "primitive": "Basic geometric shapes with modifications",
-        # Skeletal
+        # Tubular (7)
+        "tubular_conduit": "Hollow tube with optional surface texturing",
+        "vascular_perfusion_dish": "Vascular perfusion dish with collision-aware branching",
+        "blood_vessel": "Multi-layer vascular graft",
+        "nerve_conduit": "Multi-channel nerve guidance conduit",
+        "spinal_cord": "Spinal cord guidance scaffold",
+        "bladder": "Dome-shaped bladder scaffold",
+        "trachea": "C-shaped cartilage ring structure",
+        # Organ (6)
+        "hepatic_lobule": "Hexagonal liver lobule units",
+        "cardiac_patch": "Aligned microfiber cardiac scaffold",
+        "kidney_tubule": "Convoluted tubule structure",
+        "lung_alveoli": "Branching airways with alveolar sacs",
+        "pancreatic_islet": "Spherical islet cluster",
+        "liver_sinusoid": "Fenestrated tubular channels",
+        # Skeletal (7)
         "trabecular_bone": "Porous trabecular bone architecture",
         "osteochondral": "Bone-cartilage gradient scaffold",
         "articular_cartilage": "Zonal cartilage with gradient porosity",
@@ -1606,35 +1719,23 @@ async def list_scaffold_types() -> List[Dict[str, str]]:
         "tendon_ligament": "Aligned crimped fiber structure",
         "intervertebral_disc": "Annulus fibrosus with nucleus pulposus",
         "haversian_bone": "Cortical bone with Haversian canals",
-        # Organ
-        "hepatic_lobule": "Hexagonal liver lobule units",
-        "cardiac_patch": "Aligned microfiber cardiac scaffold",
-        "kidney_tubule": "Convoluted tubule structure",
-        "lung_alveoli": "Branching airways with alveolar sacs",
-        "pancreatic_islet": "Spherical islet cluster",
-        "liver_sinusoid": "Fenestrated tubular channels",
-        # Soft tissue
+        # Soft Tissue (4)
         "multilayer_skin": "3-layer skin with vascular channels",
         "skeletal_muscle": "Aligned myofiber channels",
         "cornea": "Curved lamellar cornea structure",
         "adipose": "Honeycomb adipocyte housing",
-        # Tubular
-        "blood_vessel": "Multi-layer vascular graft",
-        "nerve_conduit": "Multi-channel nerve guidance conduit",
-        "spinal_cord": "Spinal cord guidance scaffold",
-        "bladder": "Dome-shaped bladder scaffold",
-        "trachea": "C-shaped cartilage ring structure",
-        # Dental
+        # Dental (3)
         "dentin_pulp": "Tooth scaffold with pulp chamber",
         "ear_auricle": "Ear cartilage framework",
         "nasal_septum": "Curved nasal cartilage sheet",
-        # Advanced lattice
+        # Lattice (6)
+        "lattice": "Periodic lattice structure (cubic or BCC)",
         "gyroid": "Gyroid TPMS with excellent permeability",
         "schwarz_p": "Schwarz P TPMS with cubic symmetry",
         "octet_truss": "High strength-to-weight lattice",
         "voronoi": "Organic randomized cellular structure",
         "honeycomb": "Hexagonal honeycomb for load-bearing",
-        # Microfluidic
+        # Microfluidic (3)
         "organ_on_chip": "Microfluidic chip with tissue chambers",
         "gradient_scaffold": "Continuous porosity gradient",
         "perfusable_network": "Murray's law vascular network",
@@ -1644,3 +1745,128 @@ async def list_scaffold_types() -> List[Dict[str, str]]:
         {"type": t.value, "description": type_descriptions.get(t.value, "")}
         for t in ScaffoldType
     ]
+
+
+# ============================================================================
+# Primitives API Endpoints
+# ============================================================================
+
+
+class PrimitiveSchemaInfo(BaseModel):
+    """Schema information for a primitive."""
+    name: str = Field(description="Primitive name")
+    schema: Dict[str, Any] = Field(description="Parameter schema with type/min/max/default")
+    defaults: Dict[str, Any] = Field(description="Default parameter values")
+    category: str = Field(description="Primitive category (geometric, architectural, organic)")
+
+
+class PrimitivesListResponse(BaseModel):
+    """Response listing available primitives."""
+    primitives: List[str] = Field(description="List of primitive names")
+    count: int = Field(description="Total number of primitives")
+
+
+class PrimitivesSchemaResponse(BaseModel):
+    """Response with all primitive schemas."""
+    schemas: Dict[str, PrimitiveSchemaInfo] = Field(description="Schemas indexed by primitive name")
+
+
+@router.get("/primitives/list", response_model=PrimitivesListResponse)
+async def list_primitives_endpoint() -> PrimitivesListResponse:
+    """
+    List all available primitives.
+
+    Returns the names of all registered primitives that can be used
+    for scaffold generation.
+    """
+    from app.geometry.primitives import list_primitives
+    primitives = list_primitives()
+    return PrimitivesListResponse(primitives=primitives, count=len(primitives))
+
+
+@router.get("/primitives/schema", response_model=PrimitivesSchemaResponse)
+async def get_primitives_schema() -> PrimitivesSchemaResponse:
+    """
+    Get schemas for all primitives.
+
+    Returns parameter schemas including type, min, max, and default values
+    for each primitive. This can be used to build dynamic UIs.
+    """
+    from app.geometry.primitives import get_all_schemas, get_defaults, get_primitive
+
+    schemas = get_all_schemas()
+
+    # Categorize primitives
+    geometric = {'cylinder', 'sphere', 'box', 'cone', 'torus', 'capsule', 'pyramid',
+                 'wedge', 'prism', 'tube', 'ellipsoid', 'hemisphere'}
+    architectural = {'fillet', 'chamfer', 'slot', 'counterbore', 'countersink', 'boss', 'rib'}
+    organic = {'branch', 'bifurcation', 'pore', 'channel', 'fiber', 'membrane',
+               'lattice_cell', 'pore_array'}
+
+    def get_category(name: str) -> str:
+        if name in geometric:
+            return 'geometric'
+        elif name in architectural:
+            return 'architectural'
+        elif name in organic:
+            return 'organic'
+        return 'other'
+
+    result = {}
+    for name, schema in schemas.items():
+        try:
+            defaults = get_defaults(name)
+        except:
+            defaults = {}
+
+        result[name] = PrimitiveSchemaInfo(
+            name=name,
+            schema=schema,
+            defaults=defaults,
+            category=get_category(name)
+        )
+
+    return PrimitivesSchemaResponse(schemas=result)
+
+
+@router.get("/primitives/schema/{primitive_name}")
+async def get_primitive_schema(primitive_name: str) -> PrimitiveSchemaInfo:
+    """
+    Get schema for a specific primitive.
+
+    Args:
+        primitive_name: Name of the primitive (e.g., 'torus', 'capsule')
+
+    Returns:
+        Schema with parameter definitions and defaults
+    """
+    from app.geometry.primitives import get_schema, get_defaults
+
+    try:
+        schema = get_schema(primitive_name)
+        defaults = get_defaults(primitive_name)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Primitive '{primitive_name}' not found")
+
+    # Categorize
+    geometric = {'cylinder', 'sphere', 'box', 'cone', 'torus', 'capsule', 'pyramid',
+                 'wedge', 'prism', 'tube', 'ellipsoid', 'hemisphere'}
+    architectural = {'fillet', 'chamfer', 'slot', 'counterbore', 'countersink', 'boss', 'rib'}
+    organic = {'branch', 'bifurcation', 'pore', 'channel', 'fiber', 'membrane',
+               'lattice_cell', 'pore_array'}
+
+    if primitive_name in geometric:
+        category = 'geometric'
+    elif primitive_name in architectural:
+        category = 'architectural'
+    elif primitive_name in organic:
+        category = 'organic'
+    else:
+        category = 'other'
+
+    return PrimitiveSchemaInfo(
+        name=primitive_name,
+        schema=schema,
+        defaults=defaults,
+        category=category
+    )

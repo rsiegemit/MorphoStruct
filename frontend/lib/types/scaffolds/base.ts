@@ -1,5 +1,5 @@
 /**
- * Base type definitions for SHED scaffold generation
+ * Base type definitions for MorphoStruct scaffold generation
  * Synchronized with backend Python types
  */
 
@@ -38,12 +38,13 @@ export enum ScaffoldType {
   CORNEA = 'cornea',
   ADIPOSE = 'adipose',
 
-  // Tubular (5)
+  // Tubular (6)
   BLOOD_VESSEL = 'blood_vessel',
   NERVE_CONDUIT = 'nerve_conduit',
   SPINAL_CORD = 'spinal_cord',
   BLADDER = 'bladder',
   TRACHEA = 'trachea',
+  VASCULAR_PERFUSION_DISH = 'vascular_perfusion_dish',
 
   // Dental (3)
   DENTIN_PULP = 'dentin_pulp',
@@ -84,11 +85,44 @@ export enum PrimitiveShape {
   SPHERE = 'sphere',
   BOX = 'box',
   CONE = 'cone',
+
+  // Geometric (8 new)
+  TORUS = 'torus',
+  CAPSULE = 'capsule',
+  PYRAMID = 'pyramid',
+  WEDGE = 'wedge',
+  PRISM = 'prism',
+  TUBE = 'tube',
+  ELLIPSOID = 'ellipsoid',
+  HEMISPHERE = 'hemisphere',
+
+  // Architectural (7 new)
+  FILLET = 'fillet',
+  CHAMFER = 'chamfer',
+  SLOT = 'slot',
+  COUNTERBORE = 'counterbore',
+  COUNTERSINK = 'countersink',
+  BOSS = 'boss',
+  RIB = 'rib',
+
+  // Organic/Bio (8 new)
+  BRANCH = 'branch',
+  BIFURCATION = 'bifurcation',
+  PORE = 'pore',
+  CHANNEL = 'channel',
+  FIBER = 'fiber',
+  MEMBRANE = 'membrane',
+  LATTICE_CELL = 'lattice_cell',
+  PORE_ARRAY = 'pore_array',
 }
 
 export enum ModificationOperation {
   HOLE = 'hole',
   SHELL = 'shell',
+  FILLET_EDGES = 'fillet_edges',
+  CHAMFER_EDGES = 'chamfer_edges',
+  TAPER = 'taper',
+  TWIST = 'twist',
 }
 
 export enum GradientType {
