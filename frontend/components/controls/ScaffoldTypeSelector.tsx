@@ -41,12 +41,13 @@ const SCAFFOLD_TYPES: { value: ScaffoldType; label: string; description: string 
   { value: ScaffoldType.CORNEA, label: 'Cornea', description: 'Transparent lamellar eye tissue' },
   { value: ScaffoldType.ADIPOSE, label: 'Adipose', description: 'Fat tissue scaffold' },
 
-  // Tubular (5)
+  // Tubular (6)
   { value: ScaffoldType.BLOOD_VESSEL, label: 'Blood Vessel', description: 'Vascular graft with wall layers' },
   { value: ScaffoldType.NERVE_CONDUIT, label: 'Nerve Conduit', description: 'Neural guidance channel' },
   { value: ScaffoldType.SPINAL_CORD, label: 'Spinal Cord', description: 'Central nervous tissue scaffold' },
   { value: ScaffoldType.BLADDER, label: 'Bladder', description: 'Urinary bladder wall scaffold' },
   { value: ScaffoldType.TRACHEA, label: 'Trachea', description: 'Airway cartilage ring structure' },
+  { value: ScaffoldType.VASCULAR_PERFUSION_DISH, label: 'Vascular Perfusion Dish', description: 'Collision-aware branching vascular network' },
 
   // Dental (3)
   { value: ScaffoldType.DENTIN_PULP, label: 'Dentin/Pulp', description: 'Tooth dentin and pulp chamber' },
