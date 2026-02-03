@@ -188,8 +188,15 @@ export default function SettingsPage() {
       setPreferences(prefs);
       // Sync with global store
       usePreferencesStore.getState().setPreferences(prefs);
-      const prefsWithProvider = prefs as Preferences & { default_provider?: 'openai' | 'anthropic' | 'custom' };
-      setDefaultProvider(prefsWithProvider.default_provider || 'openai');
+      const prefsWithProvider = prefs as Preferences & { default_provider?: 'openai' | 'anthropic' | 'custom'; custom_endpoint?: string };
+      const savedProvider = prefsWithProvider.default_provider || 'openai';
+      setDefaultProvider(savedProvider);
+      // Also set the provider tab to match saved default
+      setProvider(savedProvider);
+      // Load custom endpoint if saved
+      if (prefsWithProvider.custom_endpoint) {
+        setCustomEndpoint(prefsWithProvider.custom_endpoint);
+      }
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
@@ -343,9 +350,79 @@ export default function SettingsPage() {
       try {
         const text = await file.text();
         const imported = JSON.parse(text);
-        await updatePreferences(imported);
+
+        // Validate imported settings structure
+        if (typeof imported !== 'object' || imported === null || Array.isArray(imported)) {
+          throw new Error('Invalid settings file: must be a JSON object');
+        }
+
+        // Define allowed preference keys with their expected types
+        const allowedKeys = new Map<string, string>([
+          ['theme', 'string'],
+          ['accent_color', 'string'],
+          ['sidebar_position', 'string'],
+          ['compact_mode', 'boolean'],
+          ['show_tooltips', 'boolean'],
+          ['auto_generate', 'boolean'],
+          ['default_scaffold_type', 'string'],
+          ['default_porosity', 'number'],
+          ['default_wall_thickness', 'number'],
+          ['auto_save_drafts', 'boolean'],
+          ['auto_save_interval', 'string'],
+          ['generation_timeout_seconds', 'number'],
+          ['camera_type', 'string'],
+          ['background_color', 'string'],
+          ['show_grid', 'boolean'],
+          ['show_axis_helpers', 'boolean'],
+          ['grid_snap', 'boolean'],
+          ['grid_snap_size', 'number'],
+          ['ambient_occlusion', 'boolean'],
+          ['anti_aliasing', 'boolean'],
+          ['default_export_format', 'string'],
+          ['include_textures', 'boolean'],
+          ['coordinate_system', 'string'],
+          ['auto_download_after_generation', 'boolean'],
+          ['default_filename_pattern', 'string'],
+          ['measurement_units', 'string'],
+          ['show_dimensions_in_viewport', 'boolean'],
+          ['default_bbox_x', 'number'],
+          ['default_bbox_y', 'number'],
+          ['default_bbox_z', 'number'],
+          ['default_resolution', 'string'],
+          ['reduced_motion', 'boolean'],
+          ['high_contrast_mode', 'boolean'],
+          ['larger_text', 'boolean'],
+          ['screen_reader_descriptions', 'boolean'],
+          ['keyboard_shortcuts_enabled', 'boolean'],
+          ['show_keyboard_shortcut_hints', 'boolean'],
+          ['default_provider', 'string'],
+          ['custom_endpoint', 'string'],
+        ]);
+
+        // Validate and filter settings
+        const validated: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(imported)) {
+          const expectedType = allowedKeys.get(key);
+
+          if (expectedType && typeof value === expectedType) {
+            // Additional validation for specific fields
+            if (expectedType === 'string' && (value as string).length > 500) {
+              continue; // Skip strings that are too long
+            }
+            if (expectedType === 'number' && (!isFinite(value as number) || isNaN(value as number))) {
+              continue; // Skip invalid numbers
+            }
+            validated[key] = value;
+          }
+        }
+
+        if (Object.keys(validated).length === 0) {
+          throw new Error('No valid settings found in file');
+        }
+
+        await updatePreferences(validated);
         await loadData();
-        setMessage('SETTINGS IMPORTED');
+        setMessage(`SETTINGS IMPORTED (${Object.keys(validated).length} preferences)`);
         setMessageType('success');
         setTimeout(() => setMessage(''), 2000);
       } catch (error) {
@@ -369,9 +446,10 @@ export default function SettingsPage() {
 
   const handleExportAllScaffolds = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/scaffolds', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/scaffolds`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${useAuthStore.getState().token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -730,6 +808,12 @@ export default function SettingsPage() {
                       <h3 className="text-3xl font-black tracking-tight mb-1">CUSTOM PROVIDER</h3>
                       <p className="text-xs font-mono text-white/40">OPENAI-COMPATIBLE API (HARVARD, LOCAL)</p>
                     </div>
+                    {hasOpenAI && defaultProvider === 'custom' && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-emerald-400/20 border border-emerald-400/50">
+                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                        <span className="text-xs font-mono text-emerald-400 tracking-wide">CONFIGURED</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -789,15 +873,46 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleTestConnection('custom')}
                         disabled={!customKey.trim() || !customEndpoint.trim() || customTest.status === 'testing'}
-                        className="flex-1 px-6 py-3 bg-blue-500 text-white font-bold tracking-tight hover:bg-blue-400 disabled:bg-white/10 disabled:text-white/30 transition-colors"
+                        className="px-6 py-3 bg-blue-500 text-white font-bold tracking-tight hover:bg-blue-400 disabled:bg-white/10 disabled:text-white/30 transition-colors"
                       >
                         TEST CONNECTION
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!customKey.trim() || !customEndpoint.trim()) return;
+                          setSaving(true);
+                          try {
+                            // Save API key as 'openai' since custom uses OpenAI-compatible API
+                            await saveApiKey('openai', customKey);
+                            // Save custom endpoint URL and default provider together
+                            await updatePreferences({
+                              custom_endpoint: customEndpoint,
+                              default_provider: 'custom'
+                            });
+                            setMessage('CUSTOM PROVIDER SAVED');
+                            setMessageType('success');
+                            setCustomKey('');
+                            setDefaultProvider('custom');
+                            await loadData();
+                          } catch (error) {
+                            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                            setMessage(`SAVE FAILED: ${errorMessage}`);
+                            setMessageType('error');
+                          } finally {
+                            setSaving(false);
+                            setTimeout(() => setMessage(''), 3000);
+                          }
+                        }}
+                        disabled={!customKey.trim() || !customEndpoint.trim() || saving}
+                        className="flex-1 px-6 py-3 bg-emerald-400 text-black font-bold tracking-tight hover:bg-emerald-300 disabled:bg-white/10 disabled:text-white/30 transition-colors"
+                      >
+                        {hasOpenAI ? 'UPDATE & SAVE' : 'SAVE KEY & ENDPOINT'}
                       </button>
                     </div>
 
                     <div className="mt-4 p-4 bg-yellow-400/10 border-l-4 border-yellow-400">
                       <p className="text-xs font-mono text-yellow-400 leading-relaxed">
-                        ! CUSTOM PROVIDER SUPPORT IS EXPERIMENTAL. ENSURE YOUR ENDPOINT IS OPENAI-COMPATIBLE.
+                        ! CUSTOM PROVIDER USES OPENAI-COMPATIBLE API. YOUR KEY WILL BE SAVED AND THE ENDPOINT URL STORED.
                       </p>
                     </div>
                   </div>

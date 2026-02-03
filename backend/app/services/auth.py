@@ -11,20 +11,17 @@ from ..models.user import User
 
 # JWT settings
 ENV = os.getenv("ENV", "development")
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "morphostruct-dev-secret-key-change-in-production")
+
+if ENV == "development":
+    SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-only-secret-not-for-production")
+else:
+    SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    if not SECRET_KEY:
+        print("FATAL: JWT_SECRET_KEY environment variable is required in production", file=sys.stderr)
+        sys.exit(1)
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours
-
-# Validate secrets on module load
-_DEFAULT_SECRET = "morphostruct-dev-secret-key-change-in-production"
-if ENV != "development" and SECRET_KEY == _DEFAULT_SECRET:
-    print("ERROR: JWT_SECRET_KEY is not set or using default value in production!", file=sys.stderr)
-    print("Set JWT_SECRET_KEY environment variable to a secure random value.", file=sys.stderr)
-    sys.exit(1)
-
-if ENV == "development" and SECRET_KEY == _DEFAULT_SECRET:
-    print("WARNING: Using insecure default JWT_SECRET_KEY in development mode.", file=sys.stderr)
-    print("Set JWT_SECRET_KEY environment variable for production deployment.", file=sys.stderr)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""

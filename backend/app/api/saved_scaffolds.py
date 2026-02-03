@@ -18,6 +18,22 @@ router = APIRouter(prefix="/api/scaffolds", tags=["scaffolds"])
 STORAGE_DIR = os.getenv("STORAGE_DIR", "./user_data")
 
 
+def safe_join(base_dir: str, filename: str) -> str:
+    """Safely join paths, preventing directory traversal attacks."""
+    if not filename:
+        raise ValueError("Filename cannot be empty")
+
+    # Resolve to absolute paths
+    base = os.path.realpath(base_dir)
+    full_path = os.path.realpath(os.path.join(base, filename))
+
+    # Ensure the result is still within base_dir
+    if not full_path.startswith(base + os.sep) and full_path != base:
+        raise ValueError("Path traversal attempt detected")
+
+    return full_path
+
+
 def get_user_storage_dir(user_uuid: str) -> str:
     """Get storage directory for a user."""
     path = os.path.join(STORAGE_DIR, user_uuid)
@@ -242,13 +258,21 @@ async def delete_scaffold(
     # Delete associated files
     user_dir = get_user_storage_dir(current_user.uuid)
     if scaffold.stl_path:
-        stl_file = os.path.join(user_dir, scaffold.stl_path)
-        if os.path.exists(stl_file):
-            os.remove(stl_file)
+        try:
+            stl_file = safe_join(user_dir, scaffold.stl_path)
+            if os.path.exists(stl_file):
+                os.remove(stl_file)
+        except ValueError:
+            # Path traversal attempt detected, skip file deletion
+            pass
     if scaffold.thumbnail_path:
-        thumb_file = os.path.join(user_dir, scaffold.thumbnail_path)
-        if os.path.exists(thumb_file):
-            os.remove(thumb_file)
+        try:
+            thumb_file = safe_join(user_dir, scaffold.thumbnail_path)
+            if os.path.exists(thumb_file):
+                os.remove(thumb_file)
+        except ValueError:
+            # Path traversal attempt detected, skip file deletion
+            pass
 
     db.delete(scaffold)
     db.commit()

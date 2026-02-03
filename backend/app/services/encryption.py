@@ -2,45 +2,39 @@
 import os
 import sys
 import base64
-import secrets
+import hashlib
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Encryption key from environment or generate deterministic one from secret
 ENV = os.getenv("ENV", "development")
-ENCRYPTION_SECRET = os.getenv("ENCRYPTION_SECRET", "shed-encryption-secret-change-in-production")
 
-# Validate secrets on module load
-_DEFAULT_SECRET = "shed-encryption-secret-change-in-production"
-if ENV != "development" and ENCRYPTION_SECRET == _DEFAULT_SECRET:
-    print("ERROR: ENCRYPTION_SECRET is not set or using default value in production!", file=sys.stderr)
-    print("Set ENCRYPTION_SECRET environment variable to a secure random value.", file=sys.stderr)
-    sys.exit(1)
-
-if ENV == "development" and ENCRYPTION_SECRET == _DEFAULT_SECRET:
-    print("WARNING: Using insecure default ENCRYPTION_SECRET in development mode.", file=sys.stderr)
-    print("Set ENCRYPTION_SECRET environment variable for production deployment.", file=sys.stderr)
-
-# Cache for storing per-key salts (in production, this should be persisted in DB)
-_salt_cache = {}
+if ENV == "development":
+    ENCRYPTION_SECRET = os.getenv("ENCRYPTION_SECRET", "dev-only-secret-not-for-production")
+else:
+    ENCRYPTION_SECRET = os.getenv("ENCRYPTION_SECRET")
+    if not ENCRYPTION_SECRET:
+        print("FATAL: ENCRYPTION_SECRET environment variable is required in production", file=sys.stderr)
+        sys.exit(1)
 
 def _get_fernet(key_id: str = "default") -> Fernet:
-    """Get Fernet instance with derived key using unique salt per key_id."""
-    # Generate or retrieve salt for this key_id
-    if key_id not in _salt_cache:
-        # In production, salts should be persisted to database
-        # For now, generate random salt that persists in memory
-        _salt_cache[key_id] = secrets.token_bytes(16)
+    """
+    Get a Fernet instance for encryption/decryption.
+    Uses a deterministic salt derived from the encryption secret and key_id,
+    so encrypted values can be decrypted even after server restart.
+    """
+    # Derive a deterministic salt from the secret and key_id
+    # This ensures the same key_id always produces the same Fernet key
+    salt_input = f"{ENCRYPTION_SECRET}:{key_id}".encode()
+    salt = hashlib.sha256(salt_input).digest()[:16]
 
-    salt = _salt_cache[key_id]
-
-    # Derive a key from the secret using PBKDF2 with unique salt
+    # Derive key using PBKDF2
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=salt,
-        iterations=100000,
+        iterations=480000,
     )
     key = base64.urlsafe_b64encode(kdf.derive(ENCRYPTION_SECRET.encode()))
     return Fernet(key)

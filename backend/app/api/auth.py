@@ -2,9 +2,13 @@
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 import json
+import os
+from urllib.parse import urlparse
+import ipaddress
+import socket
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from ..db.database import get_db
@@ -19,8 +23,64 @@ from ..services.auth import (
 from ..services.encryption import encrypt_api_key, decrypt_api_key
 from ..models.user import User, UserApiKey, UserPreferences
 
+# Optional Redis for production rate limiting
+try:
+    import redis
+    REDIS_URL = os.getenv("REDIS_URL")
+    redis_client: Optional[redis.Redis] = redis.from_url(REDIS_URL) if REDIS_URL else None
+except ImportError:
+    redis_client = None
+
+# Trusted proxy IPs for X-Forwarded-For validation
+TRUSTED_PROXY_IPS = os.getenv("TRUSTED_PROXY_IPS", "").split(",") if os.getenv("TRUSTED_PROXY_IPS") else []
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 security = HTTPBearer(auto_error=False)
+
+
+# ============================================================================
+# SSRF Protection
+# ============================================================================
+
+def is_safe_url(url: str) -> tuple[bool, str, str | None]:
+    """
+    Check if URL is safe to request (not internal/private).
+    Returns (is_safe, error_message, resolved_ip).
+    The resolved_ip can be used to pin the connection and prevent DNS rebinding.
+    """
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+
+        if not hostname:
+            return False, "Invalid URL: no hostname", None
+
+        if parsed.scheme not in ("http", "https"):
+            return False, "Invalid URL: must be http or https", None
+
+        # Block obviously internal hostnames
+        blocked_patterns = [
+            "localhost", "127.0.0.1", "0.0.0.0",
+            "169.254", "metadata", "internal",
+            ".local", ".internal", ".lan"
+        ]
+        hostname_lower = hostname.lower()
+        for pattern in blocked_patterns:
+            if pattern in hostname_lower:
+                return False, f"URL blocked: contains '{pattern}'", None
+
+        # Resolve hostname and validate IP - REQUIRED (no pass-through on failure)
+        try:
+            resolved_ip = socket.gethostbyname(hostname)
+            ip = ipaddress.ip_address(resolved_ip)
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                return False, f"URL blocked: resolves to private/internal IP {resolved_ip}", None
+            return True, "", resolved_ip
+        except socket.gaierror:
+            return False, f"URL blocked: hostname '{hostname}' could not be resolved", None
+
+    except Exception as e:
+        return False, f"URL validation error: {str(e)}", None
 
 
 # ============================================================================
@@ -28,77 +88,124 @@ security = HTTPBearer(auto_error=False)
 # ============================================================================
 
 class RateLimiter:
-    """Simple in-memory rate limiter."""
+    """
+    Rate limiter with Redis support for production multi-instance deployments.
+    Falls back to in-memory storage for development.
+    """
 
     def __init__(self):
-        # Structure: {ip: {endpoint: (count, window_start_time)}}
-        self.attempts: Dict[str, Dict[str, tuple[int, datetime]]] = {}
+        self.use_redis = redis_client is not None
+        # In-memory fallback for development
+        self._memory_store: Dict[str, Dict[str, tuple[int, datetime]]] = {}
+
+    def _get_key(self, ip: str, action: str) -> str:
+        return f"ratelimit:{action}:{ip}"
+
+    def _check_redis(self, ip: str, action: str, max_attempts: int, window_minutes: int) -> tuple[bool, int]:
+        """Check rate limit using Redis."""
+        key = self._get_key(ip, action)
+
+        # Get current count
+        current = redis_client.get(key)
+        if current is None:
+            # First attempt - set with expiry
+            redis_client.setex(key, window_minutes * 60, 1)
+            return True, max_attempts - 1
+
+        count = int(current)
+        if count >= max_attempts:
+            ttl = redis_client.ttl(key)
+            return False, 0
+
+        # Increment
+        redis_client.incr(key)
+        return True, max_attempts - count - 1
+
+    def _check_memory(self, ip: str, action: str, max_attempts: int, window_minutes: int) -> tuple[bool, int]:
+        """Check rate limit using in-memory storage (original implementation)."""
+        now = datetime.utcnow()
+        window = timedelta(minutes=window_minutes)
+
+        if action not in self._memory_store:
+            self._memory_store[action] = {}
+
+        if ip in self._memory_store[action]:
+            count, first_attempt = self._memory_store[action][ip]
+            if now - first_attempt > window:
+                # Window expired, reset
+                self._memory_store[action][ip] = (1, now)
+                return True, max_attempts - 1
+            elif count >= max_attempts:
+                return False, 0
+            else:
+                self._memory_store[action][ip] = (count + 1, first_attempt)
+                return True, max_attempts - count - 1
+        else:
+            self._memory_store[action][ip] = (1, now)
+            return True, max_attempts - 1
+
+    def check(self, ip: str, action: str, max_attempts: int = 5, window_minutes: int = 15) -> tuple[bool, int]:
+        """
+        Check if request is allowed under rate limit.
+        Returns (allowed, remaining_attempts).
+        """
+        if self.use_redis:
+            try:
+                return self._check_redis(ip, action, max_attempts, window_minutes)
+            except Exception:
+                # Fallback to memory on Redis error
+                return self._check_memory(ip, action, max_attempts, window_minutes)
+        return self._check_memory(ip, action, max_attempts, window_minutes)
+
+    def reset(self, ip: str, action: str) -> None:
+        """Reset rate limit for an IP/action."""
+        if self.use_redis:
+            try:
+                redis_client.delete(self._get_key(ip, action))
+            except Exception:
+                pass
+        if action in self._memory_store and ip in self._memory_store[action]:
+            del self._memory_store[action][ip]
 
     def check_rate_limit(self, ip: str, endpoint: str, max_attempts: int, window_minutes: int = 1) -> bool:
         """
+        Legacy method for backwards compatibility.
         Check if request should be allowed.
-
-        Args:
-            ip: Client IP address
-            endpoint: Endpoint identifier (e.g., 'login', 'register')
-            max_attempts: Maximum attempts allowed in the time window
-            window_minutes: Time window in minutes
-
-        Returns:
-            True if request should be allowed, False if rate limit exceeded
+        Returns True if allowed, False if rate limit exceeded.
         """
-        now = datetime.utcnow()
-
-        # Initialize IP tracking if not exists
-        if ip not in self.attempts:
-            self.attempts[ip] = {}
-
-        # Get current attempts for this endpoint
-        if endpoint not in self.attempts[ip]:
-            self.attempts[ip][endpoint] = (1, now)
-            return True
-
-        count, window_start = self.attempts[ip][endpoint]
-        window_end = window_start + timedelta(minutes=window_minutes)
-
-        # Check if current window has expired
-        if now > window_end:
-            # Reset counter for new window
-            self.attempts[ip][endpoint] = (1, now)
-            return True
-
-        # Still within window - check if limit exceeded
-        if count >= max_attempts:
-            return False
-
-        # Increment counter
-        self.attempts[ip][endpoint] = (count + 1, window_start)
-        return True
+        allowed, _ = self.check(ip, endpoint, max_attempts, window_minutes)
+        return allowed
 
     def cleanup_old_entries(self, max_age_minutes: int = 60):
-        """Remove entries older than max_age_minutes to prevent memory bloat."""
+        """
+        Remove entries older than max_age_minutes to prevent memory bloat.
+        Only applies to in-memory storage (Redis handles expiry automatically).
+        """
+        if self.use_redis:
+            return  # Redis handles expiry automatically
+
         now = datetime.utcnow()
         cutoff = now - timedelta(minutes=max_age_minutes)
 
-        # Collect IPs to remove
-        ips_to_remove = []
-        for ip, endpoints in self.attempts.items():
-            endpoints_to_remove = []
-            for endpoint, (_, window_start) in endpoints.items():
-                if window_start < cutoff:
-                    endpoints_to_remove.append(endpoint)
+        # Collect actions to remove
+        actions_to_remove = []
+        for action, ips in self._memory_store.items():
+            ips_to_remove = []
+            for ip, (_, first_attempt) in ips.items():
+                if first_attempt < cutoff:
+                    ips_to_remove.append(ip)
 
-            # Remove old endpoints
-            for endpoint in endpoints_to_remove:
-                del endpoints[endpoint]
+            # Remove old IPs
+            for ip in ips_to_remove:
+                del ips[ip]
 
-            # If IP has no more endpoints, mark for removal
-            if not endpoints:
-                ips_to_remove.append(ip)
+            # If action has no more IPs, mark for removal
+            if not ips:
+                actions_to_remove.append(action)
 
-        # Remove empty IPs
-        for ip in ips_to_remove:
-            del self.attempts[ip]
+        # Remove empty actions
+        for action in actions_to_remove:
+            del self._memory_store[action]
 
 
 # Global rate limiter instance
@@ -106,15 +213,19 @@ rate_limiter = RateLimiter()
 
 
 def get_client_ip(request: Request) -> str:
-    """Extract client IP from request, handling proxies."""
-    # Check for forwarded IP (common in proxied setups)
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        # X-Forwarded-For can contain multiple IPs, take the first one
-        return forwarded.split(",")[0].strip()
+    """
+    Get client IP address, only trusting X-Forwarded-For from configured proxies.
+    """
+    client_host = request.client.host if request.client else None
 
-    # Fall back to direct client IP
-    return request.client.host if request.client else "unknown"
+    # Only trust X-Forwarded-For if request comes from a trusted proxy
+    if client_host and TRUSTED_PROXY_IPS and client_host in TRUSTED_PROXY_IPS:
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            # Take the first IP (original client) from the chain
+            return forwarded.split(",")[0].strip()
+
+    return client_host or "unknown"
 
 
 def check_rate_limit(request: Request, endpoint: str, max_attempts: int):
@@ -140,8 +251,25 @@ def check_rate_limit(request: Request, endpoint: str, max_attempts: int):
 
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
+    password: str = Field(
+        ...,
+        min_length=8,
+        description="Password must be at least 8 characters with at least one uppercase, one lowercase, and one number"
+    )
     email: Optional[str] = None
+
+    @field_validator('password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain at least one number')
+        return v
 
 class LoginRequest(BaseModel):
     username: str
@@ -222,6 +350,7 @@ class PreferencesRequest(BaseModel):
 
     # LLM provider selection
     default_provider: Optional[str] = None
+    custom_endpoint: Optional[str] = None
 
 class PreferencesResponse(BaseModel):
     # Column-based fields
@@ -277,10 +406,28 @@ class PreferencesResponse(BaseModel):
 
     # LLM provider selection
     default_provider: Optional[str] = None
+    custom_endpoint: Optional[str] = None
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
-    new_password: str = Field(..., min_length=6)
+    new_password: str = Field(
+        ...,
+        min_length=8,
+        description="Password must be at least 8 characters with at least one uppercase, one lowercase, and one number"
+    )
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain at least one number')
+        return v
 
 class ChangePasswordResponse(BaseModel):
     message: str
@@ -297,9 +444,12 @@ class UpdateProfileResponse(BaseModel):
     display_name: Optional[str]
 
 class TestApiKeyRequest(BaseModel):
-    provider: str = Field(..., pattern="^(openai|anthropic)$")
+    provider: str = Field(..., pattern="^(openai|anthropic|custom)$")
     api_key: str
-    base_url: Optional[str] = None
+    base_url: Optional[str] = Field(default=None, alias="custom_endpoint")
+
+    class Config:
+        populate_by_name = True
 
 class TestApiKeyResponse(BaseModel):
     success: bool
@@ -581,7 +731,8 @@ async def get_preferences(
         keyboard_shortcuts_enabled=extended_prefs.get("keyboard_shortcuts_enabled"),
         show_keyboard_shortcut_hints=extended_prefs.get("show_keyboard_shortcut_hints"),
 
-        default_provider=extended_prefs.get("default_provider")
+        default_provider=extended_prefs.get("default_provider"),
+        custom_endpoint=extended_prefs.get("custom_endpoint")
     )
 
 @router.put("/preferences", response_model=PreferencesResponse)
@@ -679,17 +830,28 @@ async def update_preferences(
         keyboard_shortcuts_enabled=extended_prefs.get("keyboard_shortcuts_enabled"),
         show_keyboard_shortcut_hints=extended_prefs.get("show_keyboard_shortcut_hints"),
 
-        default_provider=extended_prefs.get("default_provider")
+        default_provider=extended_prefs.get("default_provider"),
+        custom_endpoint=extended_prefs.get("custom_endpoint")
     )
 
 @router.post("/change-password", response_model=ChangePasswordResponse)
 async def change_password(
     request: ChangePasswordRequest,
+    request_obj: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Change user's password."""
     from ..services.auth import verify_password, get_password_hash
+
+    # Rate limiting: 5 attempts per 15 minutes
+    client_ip = get_client_ip(request_obj)
+    allowed, remaining = rate_limiter.check(client_ip, "change_password", max_attempts=5, window_minutes=15)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many attempts. Please try again later."
+        )
 
     # Verify current password
     if not verify_password(request.current_password, current_user.hashed_password):
@@ -741,10 +903,20 @@ async def update_profile(
 @router.post("/test-api-key", response_model=TestApiKeyResponse)
 async def test_api_key(
     request: TestApiKeyRequest,
+    request_obj: Request,
     current_user: User = Depends(get_current_user)
 ):
     """Test an API key by making a simple request to the provider."""
     import httpx
+
+    # Rate limiting: 10 attempts per 5 minutes (more generous for testing multiple providers)
+    client_ip = get_client_ip(request_obj)
+    allowed, remaining = rate_limiter.check(client_ip, "test_api_key", max_attempts=10, window_minutes=5)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many attempts. Please try again later."
+        )
 
     try:
         if request.provider == "openai":
@@ -804,6 +976,100 @@ async def test_api_key(
                     return TestApiKeyResponse(
                         success=False,
                         message=f"API key test failed: {response.status_code}"
+                    )
+
+        elif request.provider == "custom":
+            # Custom OpenAI-compatible endpoint
+            if not request.base_url:
+                return TestApiKeyResponse(
+                    success=False,
+                    message="Custom provider requires a base URL"
+                )
+
+            # SSRF Protection: validate URL before making request
+            is_safe, error_msg, resolved_ip = is_safe_url(request.base_url)
+            if not is_safe:
+                return TestApiKeyResponse(
+                    success=False,
+                    message=f"Security error: {error_msg}"
+                )
+
+            # Normalize the base URL - remove /chat/completions if present
+            base_url = request.base_url.rstrip('/')
+            if base_url.endswith('/chat/completions'):
+                base_url = base_url[:-len('/chat/completions')]
+            if not base_url.endswith('/v1'):
+                # If the URL doesn't end with /v1, check if it's included elsewhere
+                if '/v1' not in base_url:
+                    base_url = base_url + '/v1'
+
+            headers = {
+                "Authorization": f"Bearer {request.api_key}",
+                "Content-Type": "application/json"
+            }
+
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                # First try /models endpoint (standard OpenAI compatible)
+                try:
+                    response = await client.get(
+                        f"{base_url}/models",
+                        headers=headers
+                    )
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        model_count = len(data.get("data", []))
+                        return TestApiKeyResponse(
+                            success=True,
+                            message="Custom endpoint connection successful",
+                            model_info=f"Found {model_count} available models"
+                        )
+                except Exception:
+                    pass
+
+                # Fallback: test with a minimal chat completion
+                try:
+                    response = await client.post(
+                        f"{base_url}/chat/completions",
+                        headers=headers,
+                        json={
+                            "model": "gpt-4",  # Common model name
+                            "max_tokens": 1,
+                            "messages": [{"role": "user", "content": "Hi"}]
+                        }
+                    )
+
+                    if response.status_code == 200:
+                        return TestApiKeyResponse(
+                            success=True,
+                            message="Custom endpoint connection successful",
+                            model_info="Successfully tested chat completions"
+                        )
+                    elif response.status_code == 401:
+                        return TestApiKeyResponse(
+                            success=False,
+                            message="Authentication failed - check your API key"
+                        )
+                    elif response.status_code == 404:
+                        return TestApiKeyResponse(
+                            success=False,
+                            message="Endpoint not found - check your base URL"
+                        )
+                    else:
+                        error_detail = ""
+                        try:
+                            error_data = response.json()
+                            error_detail = error_data.get("error", {}).get("message", "")
+                        except Exception:
+                            pass
+                        return TestApiKeyResponse(
+                            success=False,
+                            message=f"API test failed ({response.status_code}): {error_detail or 'Unknown error'}"
+                        )
+                except Exception as e:
+                    return TestApiKeyResponse(
+                        success=False,
+                        message=f"Connection failed: {str(e)}"
                     )
 
         return TestApiKeyResponse(
@@ -920,11 +1186,21 @@ class DeleteAccountRequest(BaseModel):
 @router.delete("/account", response_model=DeleteSessionResponse)
 async def delete_account(
     request: DeleteAccountRequest,
+    request_obj: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete user account permanently."""
     from ..services.auth import verify_password
+
+    # Rate limiting: 5 attempts per 15 minutes
+    client_ip = get_client_ip(request_obj)
+    allowed, remaining = rate_limiter.check(client_ip, "delete_account", max_attempts=5, window_minutes=15)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many attempts. Please try again later."
+        )
 
     # Verify password
     if not verify_password(request.password, current_user.hashed_password):

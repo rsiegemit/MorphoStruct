@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
 from functools import lru_cache
+import os
+import sys
 
 class Settings(BaseSettings):
     app_name: str = "MorphoStruct API"
@@ -31,15 +33,38 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./morphostruct.db"
 
     # JWT Authentication settings
-    jwt_secret_key: str = "morphostruct-dev-secret-key-change-in-production"
+    jwt_secret_key: str = ""
     access_token_expire_minutes: int = 1440
 
     # Encryption for API keys
-    encryption_secret: str = "morphostruct-encryption-secret-change-in-production"
+    encryption_secret: str = ""
 
     class Config:
         env_file = ".env"
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+
+    # Validate secrets on load
+    ENV = os.getenv("ENV", "development")
+
+    # Check JWT secret
+    if ENV != "development":
+        if not settings.jwt_secret_key:
+            print("FATAL: JWT_SECRET_KEY environment variable is required in production", file=sys.stderr)
+            sys.exit(1)
+    else:
+        if not settings.jwt_secret_key:
+            settings.jwt_secret_key = "dev-only-secret-not-for-production"
+
+    # Check encryption secret
+    if ENV != "development":
+        if not settings.encryption_secret:
+            print("FATAL: ENCRYPTION_SECRET environment variable is required in production", file=sys.stderr)
+            sys.exit(1)
+    else:
+        if not settings.encryption_secret:
+            settings.encryption_secret = "dev-only-secret-not-for-production"
+
+    return settings

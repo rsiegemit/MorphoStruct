@@ -8,9 +8,26 @@ from ..core.logging import get_logger
 
 logger = get_logger(__name__)
 
+def mask_db_url(url: str) -> str:
+    """Mask password in database URL for safe logging."""
+    from urllib.parse import urlparse, urlunparse
+    try:
+        parsed = urlparse(url)
+        if parsed.password:
+            # Replace password with asterisks
+            netloc = f"{parsed.username}:****@{parsed.hostname}"
+            if parsed.port:
+                netloc += f":{parsed.port}"
+            masked = parsed._replace(netloc=netloc)
+            return urlunparse(masked)
+        return url
+    except Exception:
+        # If parsing fails, just show the scheme
+        return url.split("://")[0] + "://****" if "://" in url else "****"
+
 # Database URL from environment or default to SQLite
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./shed.db")
-logger.info(f"Database URL configured: {DATABASE_URL}")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./morphostruct.db")
+logger.info(f"Database URL configured: {mask_db_url(DATABASE_URL)}")
 
 # Create engine
 if DATABASE_URL.startswith("sqlite"):
