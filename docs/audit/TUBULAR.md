@@ -640,6 +640,8 @@ Sources:
 | height | generate_vascular_perfusion_dish L502 | ✅ |
 | scaffold_height | generate_vascular_perfusion_dish L503 | ✅ |
 | inlet_radius | generate_vascular_perfusion_dish L504 | ✅ |
+| rim_height | generate_vascular_perfusion_dish L621-622 | ✅ |
+| flip_upside_down | generate_vascular_perfusion_dish L851-871 | ✅ |
 
 ### Biological Accuracy
 | Parameter | Default | Literature/Rationale | Status |
@@ -664,8 +666,10 @@ Sources:
 
 ### Notes
 - This is a **new scaffold** integrating collision detection with vascular network generation
-- All 23 parameters are actively used in geometry generation
+- All 25 parameters are actively used in geometry generation
 - Collision detection ensures no overlapping branches, improving mesh quality
 - Deterministic mode provides straight grid-aligned channels for comparison
+- **rim_height**: Controls the height of the dish rim above the scaffold body (0-3mm)
+- **flip_upside_down**: Rotates the scaffold 180° for different printing orientations
 
-**Bio Verification**: 23/23 parameters have reasonable defaults based on vascular biology
+**Bio Verification**: 25/25 parameters have reasonable defaults based on vascular biology

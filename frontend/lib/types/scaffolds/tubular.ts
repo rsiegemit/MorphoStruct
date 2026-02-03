@@ -433,6 +433,10 @@ export interface VascularPerfusionDishParams extends BaseParams {
   height_mm: number;
   /** Inlet branch radius (mm) */
   inlet_radius_mm: number;
+  /** Height of rim around dish edge (mm, 0-3) */
+  rim_height_mm: number;
+  /** Flip scaffold 180° for export */
+  flip_upside_down: boolean;
   /** Random seed for reproducibility */
   seed?: number;
 }
@@ -838,5 +842,7 @@ export const DEFAULT_VASCULAR_PERFUSION_DISH: VascularPerfusionDishParams = {
   outer_radius_mm: 4.875,
   height_mm: 2.0,
   inlet_radius_mm: 0.35,
+  rim_height_mm: 0.2,
+  flip_upside_down: false,
   seed: 42,
 };

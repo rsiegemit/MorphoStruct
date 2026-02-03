@@ -201,7 +201,7 @@ class BaseParams(BaseModel):
 
 
 # ============================================================================
-# Original Type-Specific Parameters
+# Legacy Type-Specific Parameters
 # ============================================================================
 
 
@@ -323,6 +323,12 @@ class VascularPerfusionDishParams(BaseParams):
     )
     inlet_radius_mm: float = Field(
         default=0.35, gt=0, description="Inlet branch radius (mm)"
+    )
+    rim_height_mm: float = Field(
+        default=0.2, ge=0.0, le=3.0, description="Height of rim around dish edge (mm, 0-3)"
+    )
+    flip_upside_down: bool = Field(
+        default=False, description="Flip scaffold 180° for export"
     )
     seed: Optional[int] = Field(
         default=42, description="Random seed for reproducibility"
@@ -1101,7 +1107,7 @@ class NasalSeptumParams(BaseParams):
 
 
 # ============================================================================
-# Advanced Lattice Parameters (5 types)
+# Lattice Parameters (TPMS and strut-based, 6 types including basic)
 # ============================================================================
 
 
@@ -1687,7 +1693,7 @@ DEFAULT_NASAL_SEPTUM = NasalSeptumParams(
 )
 
 # ============================================================================
-# Advanced Lattice Defaults (5 types)
+# Lattice Defaults (TPMS and strut-based)
 # ============================================================================
 
 DEFAULT_GYROID = GyroidParams(

@@ -357,6 +357,8 @@ class VascularPerfusionDishParams:
         height: Total height
         scaffold_height: Active scaffold height
         inlet_radius: Radius of inlet channels
+        rim_height: Height of rim around dish edge (0-3mm)
+        flip_upside_down: Flip scaffold 180° for export
     """
     # Network structure
     inlets: int = 4
@@ -388,6 +390,8 @@ class VascularPerfusionDishParams:
     height: float = 2.0
     scaffold_height: float = 1.92
     inlet_radius: float = 0.35
+    rim_height: float = 0.2
+    flip_upside_down: bool = False
 
     @classmethod
     def from_dict(cls, params: Dict[str, Any]) -> 'VascularPerfusionDishParams':
@@ -416,6 +420,8 @@ class VascularPerfusionDishParams:
             height=params.get('height', 2.0),
             scaffold_height=params.get('scaffold_height', 1.92),
             inlet_radius=params.get('inlet_radius', 0.35),
+            rim_height=params.get('rim_height', 0.2),
+            flip_upside_down=params.get('flip_upside_down', False),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -444,6 +450,8 @@ class VascularPerfusionDishParams:
             'height': self.height,
             'scaffold_height': self.scaffold_height,
             'inlet_radius': self.inlet_radius,
+            'rim_height': self.rim_height,
+            'flip_upside_down': self.flip_upside_down,
         }
 
 
@@ -610,8 +618,8 @@ def generate_vascular_perfusion_dish(
     # Geometry setup
     outer_r = params.outer_radius
     inner_r = params.inner_radius
-    height = params.height
     scaffold_h = params.scaffold_height
+    height = scaffold_h + params.rim_height  # Rim extends above the body
     net_r = inner_r - 0.12
     net_top = scaffold_h
     net_bot = params.bottom_height
@@ -841,6 +849,8 @@ def generate_vascular_perfusion_dish(
         branch(ix, iy, net_top, start_r, out_ang, params.levels, None)
 
     if not channels:
+        if params.flip_upside_down:
+            scaffold_body = scaffold_body.rotate([180, 0, 0])
         return scaffold_body, None, scaffold_body
 
     if progress_callback:
@@ -854,6 +864,12 @@ def generate_vascular_perfusion_dish(
 
     # Boolean subtract channels from scaffold
     result = scaffold_body - combined
+
+    # Apply flip if requested
+    if params.flip_upside_down:
+        scaffold_body = scaffold_body.rotate([180, 0, 0])
+        combined = combined.rotate([180, 0, 0])
+        result = result.rotate([180, 0, 0])
 
     return scaffold_body, combined, result
 

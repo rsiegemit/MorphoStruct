@@ -958,6 +958,8 @@ def _convert_params_for_generator(scaffold_type: ScaffoldType, params: Dict[str,
             converted["scaffold_height"] = converted["height"] * 0.96
         if "inlet_radius_mm" in converted:
             converted["inlet_radius"] = converted.pop("inlet_radius_mm")
+        if "rim_height_mm" in converted:
+            converted["rim_height"] = converted.pop("rim_height_mm")
         # Map inner_radius if not specified
         if "inner_radius" not in converted and "outer_radius" in converted:
             converted["inner_radius"] = converted["outer_radius"] * 0.94
