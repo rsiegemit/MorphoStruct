@@ -684,7 +684,10 @@ def generate_vascular_perfusion_dish(
         remaining_levels: int, parent_dir: Optional[Tuple[float, float, float]]
     ):
         """Recursive branch generation with collision detection."""
-        if r < 0.03 or z <= net_bot + 0.02:
+        # Minimum z must account for branch radius to prevent poking through bottom
+        min_z = net_bot + r * 1.2  # Add buffer for sphere radius
+
+        if r < 0.03 or z <= min_z:
             return
 
         # Calculate target z
@@ -692,9 +695,9 @@ def generate_vascular_perfusion_dish(
             z_step = (z - net_bot) / (remaining_levels + 1)
             if not params.deterministic:
                 z_step *= rng.uniform(1 - params.z_variation, 1 + params.z_variation)
-            nz = max(z - z_step, net_bot + 0.02)
+            nz = max(z - z_step, min_z)
         else:
-            nz = net_bot + 0.02
+            nz = min_z
 
         is_terminal = remaining_levels == 0
 
@@ -777,8 +780,9 @@ def generate_vascular_perfusion_dish(
         if path_points and len(path_points) >= 2:
             branch_tracker.add_curved_branch(path_points, avg_radius)
 
-        # Continue branching
-        if remaining_levels > 0 and nz > net_bot + 0.05:
+        # Continue branching (ensure children have room above bottom)
+        child_min_z = net_bot + cr * 1.2
+        if remaining_levels > 0 and nz > child_min_z + 0.05:
             junction = m3d.Manifold.sphere(cr * 1.15, res)
             channels.append(junction.translate([nx, ny, nz]))
 

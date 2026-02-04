@@ -2,6 +2,26 @@ import { authFetch } from '../store/authStore';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Helper to extract error message from FastAPI response
+function extractErrorMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (Array.isArray(detail) && detail.length > 0) {
+    // Pydantic validation errors are arrays of objects with 'msg' field
+    const firstError = detail[0];
+    if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
+      // Clean up the message - remove "Value error, " prefix if present
+      const msg = String(firstError.msg);
+      return msg.replace(/^Value error,\s*/i, '');
+    }
+    if (typeof firstError === 'string') {
+      return firstError;
+    }
+  }
+  return fallback;
+}
+
 export interface ApiKey {
   id: number;
   provider: 'openai' | 'anthropic';
@@ -16,6 +36,7 @@ export interface Preferences {
 
   // Provider settings
   default_provider?: 'openai' | 'anthropic' | 'custom';
+  custom_endpoint?: string;
 
   // Appearance additions
   accent_color?: 'emerald' | 'blue' | 'purple' | 'orange' | 'pink';
@@ -153,7 +174,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
   });
   if (!response.ok) {
     const data = await response.json();
-    throw new Error(data.detail || 'Failed to change password');
+    throw new Error(extractErrorMessage(data.detail, 'Failed to change password'));
   }
 }
 
@@ -186,7 +207,7 @@ export async function deleteAccount(password: string): Promise<void> {
   });
   if (!response.ok) {
     const data = await response.json();
-    throw new Error(data.detail || 'Failed to delete account');
+    throw new Error(extractErrorMessage(data.detail, 'Failed to delete account'));
   }
 }
 

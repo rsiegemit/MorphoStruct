@@ -139,6 +139,21 @@ export default function AccountPage() {
       return;
     }
 
+    if (!/[A-Z]/.test(newPassword)) {
+      showMessage('PASSWORD MUST CONTAIN AN UPPERCASE LETTER', true);
+      return;
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      showMessage('PASSWORD MUST CONTAIN A LOWERCASE LETTER', true);
+      return;
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      showMessage('PASSWORD MUST CONTAIN A NUMBER', true);
+      return;
+    }
+
     setSaving(true);
     try {
       await changePassword(currentPassword, newPassword);
@@ -202,6 +217,9 @@ export default function AccountPage() {
 
   const passwordRequirements = [
     { label: 'At least 8 characters', met: newPassword.length >= 8 },
+    { label: 'One uppercase letter', met: /[A-Z]/.test(newPassword) },
+    { label: 'One lowercase letter', met: /[a-z]/.test(newPassword) },
+    { label: 'One number', met: /[0-9]/.test(newPassword) },
     { label: 'Passwords match', met: newPassword.length > 0 && newPassword === confirmPassword },
   ];
 

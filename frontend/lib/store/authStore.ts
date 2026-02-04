@@ -24,6 +24,26 @@ interface AuthState {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Helper to extract error message from FastAPI response
+function extractErrorMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (Array.isArray(detail) && detail.length > 0) {
+    // Pydantic validation errors are arrays of objects with 'msg' field
+    const firstError = detail[0];
+    if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
+      // Clean up the message - remove "Value error, " prefix if present
+      const msg = String(firstError.msg);
+      return msg.replace(/^Value error,\s*/i, '');
+    }
+    if (typeof firstError === 'string') {
+      return firstError;
+    }
+  }
+  return fallback;
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -44,7 +64,7 @@ export const useAuthStore = create<AuthState>()(
 
           if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.detail || 'Login failed');
+            throw new Error(extractErrorMessage(data.detail, 'Login failed'));
           }
 
           const data = await response.json();
@@ -75,7 +95,7 @@ export const useAuthStore = create<AuthState>()(
 
           if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.detail || 'Registration failed');
+            throw new Error(extractErrorMessage(data.detail, 'Registration failed'));
           }
 
           const data = await response.json();
@@ -150,7 +170,11 @@ export async function authFetch(
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  if (!headers.has('Content-Type') && options.body) {
+  // Only set Content-Type for non-FormData bodies
+  // FormData needs the browser to set the multipart boundary automatically
+  const isFormData = options.body instanceof FormData ||
+    (options.body && typeof options.body === 'object' && options.body.constructor?.name === 'FormData');
+  if (!headers.has('Content-Type') && options.body && !isFormData) {
     headers.set('Content-Type', 'application/json');
   }
 

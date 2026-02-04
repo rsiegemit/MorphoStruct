@@ -3,6 +3,26 @@ const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000]; // milliseconds
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 
+// Helper to extract error message from FastAPI response
+function extractErrorMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (Array.isArray(detail) && detail.length > 0) {
+    // Pydantic validation errors are arrays of objects with 'msg' field
+    const firstError = detail[0];
+    if (typeof firstError === 'object' && firstError !== null && 'msg' in firstError) {
+      // Clean up the message - remove "Value error, " prefix if present
+      const msg = String(firstError.msg);
+      return msg.replace(/^Value error,\s*/i, '');
+    }
+    if (typeof firstError === 'string') {
+      return firstError;
+    }
+  }
+  return fallback;
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -88,7 +108,7 @@ export async function apiRequest<T>(
       const errorData = await response.json().catch(() => ({}));
       throw new ApiError(
         response.status,
-        errorData.detail || `HTTP error ${response.status}`
+        extractErrorMessage(errorData.detail, `HTTP error ${response.status}`)
       );
     }
 
@@ -111,7 +131,7 @@ export async function apiBlobRequest(
       let errorMessage = `HTTP error ${response.status}`;
       try {
         const errorData = await response.clone().json();
-        errorMessage = errorData.detail || errorMessage;
+        errorMessage = extractErrorMessage(errorData.detail, errorMessage);
       } catch {
         // If JSON parsing fails, try to get text
         try {
