@@ -6,6 +6,7 @@ pydantic-settings>=2.1.0
 manifold3d>=2.3.0
 numpy>=1.24.0
 scikit-image>=0.21.0
+Pillow>=10.0.0
 anthropic>=0.18.0
 python-dotenv>=1.0.0
 
@@ -18,3 +19,6 @@ PyJWT>=2.8.0
 
 # Optional LLM providers
 openai>=1.0.0
+
+# Optional production dependencies
+redis>=5.0.0  # For production rate limiting across multiple instances

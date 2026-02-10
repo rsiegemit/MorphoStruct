@@ -147,7 +147,7 @@ from pathlib import Path
 logger = setup_logger(
     __name__,
     level=logging.INFO,
-    log_file=Path("/var/log/shed/app.log")
+    log_file=Path("/var/log/morphostruct/app.log")
 )
 ```
 
@@ -241,7 +241,7 @@ Control logging behavior with environment variables:
 export LOG_LEVEL=INFO
 
 # Enable file logging
-export LOG_FILE=/var/log/shed/app.log
+export LOG_FILE=/var/log/morphostruct/app.log
 
 # Log format (simple, detailed, json)
 export LOG_FORMAT=detailed

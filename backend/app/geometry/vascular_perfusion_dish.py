@@ -353,12 +353,16 @@ class VascularPerfusionDishParams:
     Geometry:
         resolution: Cylinder/sphere segments (6-32)
         outer_radius: Outer ring radius
-        inner_radius: Inner scaffold radius
+        rim_width: Thickness of rim wall (outer_radius - inner_radius)
         height: Total height
         scaffold_height: Active scaffold height
         inlet_radius: Radius of inlet channels
         rim_height: Height of rim around dish edge (0-3mm)
         flip_upside_down: Flip scaffold 180° for export
+
+    Bottom Section:
+        show_bottom: Toggle bottom section (empty air with rim walls)
+        bottom_section_height: Height of bottom section (mm)
     """
     # Network structure
     inlets: int = 4
@@ -386,16 +390,31 @@ class VascularPerfusionDishParams:
     # Geometry
     resolution: int = 12
     outer_radius: float = 4.875
-    inner_radius: float = 4.575
+    rim_width: float = 0.3
     height: float = 2.0
     scaffold_height: float = 1.92
     inlet_radius: float = 0.35
     rim_height: float = 0.2
     flip_upside_down: bool = False
 
+    # Bottom section
+    show_bottom: bool = False
+    bottom_section_height: float = 0.5
+    bottom_radius: float = 3.0
+
     @classmethod
     def from_dict(cls, params: Dict[str, Any]) -> 'VascularPerfusionDishParams':
         """Create VascularPerfusionDishParams from a dictionary."""
+        outer_r = params.get('outer_radius', 4.875)
+
+        # Support rim_width directly, or derive from legacy inner_radius
+        if 'rim_width' in params:
+            rim_w = params['rim_width']
+        elif 'inner_radius' in params:
+            rim_w = outer_r - params['inner_radius']
+        else:
+            rim_w = 0.3
+
         return cls(
             inlets=params.get('inlets', 4),
             levels=params.get('levels', 2),
@@ -415,13 +434,16 @@ class VascularPerfusionDishParams:
             tips_down=params.get('tips_down', False),
             seed=params.get('seed', 42),
             resolution=params.get('resolution', 12),
-            outer_radius=params.get('outer_radius', 4.875),
-            inner_radius=params.get('inner_radius', 4.575),
+            outer_radius=outer_r,
+            rim_width=rim_w,
             height=params.get('height', 2.0),
             scaffold_height=params.get('scaffold_height', 1.92),
             inlet_radius=params.get('inlet_radius', 0.35),
             rim_height=params.get('rim_height', 0.2),
             flip_upside_down=params.get('flip_upside_down', False),
+            show_bottom=params.get('show_bottom', False),
+            bottom_section_height=params.get('bottom_section_height', 0.5),
+            bottom_radius=params.get('bottom_radius', 3.0),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -446,12 +468,15 @@ class VascularPerfusionDishParams:
             'seed': self.seed,
             'resolution': self.resolution,
             'outer_radius': self.outer_radius,
-            'inner_radius': self.inner_radius,
+            'rim_width': self.rim_width,
             'height': self.height,
             'scaffold_height': self.scaffold_height,
             'inlet_radius': self.inlet_radius,
             'rim_height': self.rim_height,
             'flip_upside_down': self.flip_upside_down,
+            'show_bottom': self.show_bottom,
+            'bottom_section_height': self.bottom_section_height,
+            'bottom_radius': self.bottom_radius,
         }
 
 
@@ -617,12 +642,13 @@ def generate_vascular_perfusion_dish(
 
     # Geometry setup
     outer_r = params.outer_radius
-    inner_r = params.inner_radius
+    inner_r = outer_r - params.rim_width
     scaffold_h = params.scaffold_height
     height = scaffold_h + params.rim_height  # Rim extends above the body
     net_r = inner_r - 0.12
     net_top = scaffold_h
-    net_bot = params.bottom_height
+    # When bottom section is active, bottom_height is floor thickness, not vessel termination z
+    net_bot = 0.06 if params.show_bottom else params.bottom_height
     cone_angle = np.radians(params.cone_angle)
     res = params.resolution
 
@@ -632,6 +658,26 @@ def generate_vascular_perfusion_dish(
     ring = outer - inner_cut
     body = m3d.Manifold.cylinder(scaffold_h, inner_r, inner_r, 48)
     scaffold_body = ring + body
+
+    # Add bottom section: solid floor + tapered void + rim walls
+    if params.show_bottom:
+        bsh = params.bottom_section_height  # total bottom section height
+        bh = params.bottom_height           # floor thickness
+        br = params.bottom_radius           # inner radius at floor
+
+        # Full outer cylinder for bottom section
+        bottom_outer = m3d.Manifold.cylinder(bsh, outer_r, outer_r, 48)
+
+        # Tapered void: from bottom_radius at floor to inner_r at top
+        void_h = bsh - bh
+        if void_h > 0.01:
+            void_cone = m3d.Manifold.cylinder(void_h + 0.02, br, inner_r, 48)
+            void_cone = void_cone.translate([0, 0, bh - 0.01])
+            bottom_section = bottom_outer - void_cone
+        else:
+            bottom_section = bottom_outer
+
+        scaffold_body = scaffold_body + bottom_section.translate([0, 0, -bsh])
 
     # Calculate inlet positions
     n = params.inlets

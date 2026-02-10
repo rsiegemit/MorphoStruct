@@ -1,6 +1,7 @@
 'use client';
 
-import { Download, FileType, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Download, FileType, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ValidationSummary } from './ValidationSummary';
 
@@ -18,7 +19,9 @@ interface ExportPanelProps {
     generation_time_ms: number;
   } | null;
   onExport: (format: 'binary' | 'ascii') => void;
+  onSave?: (name: string) => void;
   isExporting?: boolean;
+  isSaving?: boolean;
 }
 
 export function ExportPanel({
@@ -26,9 +29,20 @@ export function ExportPanel({
   validation,
   stats,
   onExport,
+  onSave,
   isExporting = false,
+  isSaving = false,
 }: ExportPanelProps) {
-  const canExport = scaffoldId && validation?.is_valid;
+  const canExport = !!scaffoldId;
+  const [saveName, setSaveName] = useState('');
+  const [showSaveInput, setShowSaveInput] = useState(false);
+
+  const handleSave = () => {
+    if (!saveName.trim() || !onSave) return;
+    onSave(saveName.trim());
+    setSaveName('');
+    setShowSaveInput(false);
+  };
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 space-y-4">
@@ -80,6 +94,49 @@ export function ExportPanel({
           STL (ASCII)
         </Button>
       </div>
+
+      {/* Save to Library */}
+      {onSave && canExport && (
+        <>
+          {showSaveInput ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                placeholder="Scaffold name..."
+                className="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+              <Button
+                onClick={handleSave}
+                disabled={!saveName.trim() || isSaving}
+                size="sm"
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+              <Button
+                onClick={() => { setShowSaveInput(false); setSaveName(''); }}
+                variant="outline"
+                size="sm"
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setShowSaveInput(true)}
+              variant="outline"
+              className="w-full"
+              disabled={isSaving}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save to Library
+            </Button>
+          )}
+        </>
+      )}
 
       {!scaffoldId && (
         <p className="text-sm text-slate-500 text-center">

@@ -250,8 +250,8 @@ def make_aspherical_shell(
     )
     clip_cylinder = clip_cylinder.translate([0, 0, -cap_height * 0.1])
 
-    # Clip to cap shapes (intersection, not XOR)
-    outer_cap = outer_sphere & clip_cylinder
+    # Clip to cap shapes (intersection)
+    outer_cap = m3d.Manifold.batch_boolean([outer_sphere, clip_cylinder], m3d.OpType.Intersect)
 
     inner_clip = m3d.Manifold.cylinder(
         cap_height,
@@ -260,7 +260,7 @@ def make_aspherical_shell(
         resolution
     )
     inner_clip = inner_clip.translate([0, 0, -cap_height * 0.1])
-    inner_cap = inner_sphere & inner_clip
+    inner_cap = m3d.Manifold.batch_boolean([inner_sphere, inner_clip], m3d.OpType.Intersect)
 
     # Create shell
     shell = outer_cap - inner_cap
@@ -328,8 +328,8 @@ def make_layer_shell(
     inner_clip = m3d.Manifold.cylinder(cap_height, r_inner, r_inner, resolution)
     inner_clip = inner_clip.translate([0, 0, -0.1])
 
-    outer_cap = outer_sphere & outer_clip
-    inner_cap = inner_sphere & inner_clip
+    outer_cap = m3d.Manifold.batch_boolean([outer_sphere, outer_clip], m3d.OpType.Intersect)
+    inner_cap = m3d.Manifold.batch_boolean([inner_sphere, inner_clip], m3d.OpType.Intersect)
 
     shell = outer_cap - inner_cap
 
@@ -830,7 +830,7 @@ def make_stromal_lamellae(
         clip = m3d.Manifold.cylinder(sag * 2 + 0.1, r_at_depth, r_at_depth, resolution)
         clip = clip.translate([0, 0, -0.05])
 
-        lamella_surface = sphere & clip
+        lamella_surface = m3d.Manifold.batch_boolean([sphere, clip], m3d.OpType.Intersect)
 
         # Make it a thin shell
         inner_sphere = m3d.Manifold.sphere(R_at_depth - lamella_thickness, resolution)
@@ -840,7 +840,7 @@ def make_stromal_lamellae(
         inner_clip = m3d.Manifold.cylinder(sag * 2 + 0.1, r_at_depth - lamella_thickness, r_at_depth - lamella_thickness, resolution)
         inner_clip = inner_clip.translate([0, 0, -0.05])
 
-        inner_surface = inner_sphere ^ inner_clip
+        inner_surface = m3d.Manifold.batch_boolean([inner_sphere, inner_clip], m3d.OpType.Intersect)
 
         lamella_shell = lamella_surface - inner_surface
 

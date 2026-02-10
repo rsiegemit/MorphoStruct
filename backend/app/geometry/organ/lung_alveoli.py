@@ -1293,10 +1293,10 @@ def generate_lung_alveoli(params: LungAlveoliParams) -> tuple[m3d.Manifold, dict
         porosity_subtract = batch_union(wall_porosity_pores)
         result = result - porosity_subtract
 
-    # Clip to bounding box
+    # Clip to bounding box (intersection)
     bx, by, bz = params.bounding_box
     bbox = m3d.Manifold.cube([bx, by, bz]).translate([-bx/2, -by/2, 0])
-    result = result ^ bbox
+    result = m3d.Manifold.batch_boolean([result, bbox], m3d.OpType.Intersect)
 
     # Calculate statistics
     mesh = result.to_mesh()

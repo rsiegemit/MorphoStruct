@@ -151,13 +151,13 @@ MorphoStruct/
 │       ├── api/                 # REST endpoints
 │       ├── geometry/            # Scaffold generators
 │       │   ├── primitives/      # 27 geometric primitives
-│       │   ├── skeletal/        # Bone & cartilage (7)
-│       │   ├── organ/           # Organ-specific (6)
-│       │   ├── soft_tissue/     # Skin, muscle (4)
-│       │   ├── tubular/         # Vessels, conduits (6)
 │       │   ├── dental/          # Dental scaffolds (3)
-│       │   ├── lattice/         # TPMS & strut lattices (5)
-│       │   └── microfluidic/    # Organ-on-chip (3)
+│       │   ├── lattice/         # TPMS & strut lattices (6)
+│       │   ├── microfluidic/    # Organ-on-chip (3)
+│       │   ├── organ/           # Organ-specific (6)
+│       │   ├── skeletal/        # Bone & cartilage (7)
+│       │   ├── soft_tissue/     # Skin, muscle (4)
+│       │   └── tubular/         # Vessels, conduits (7)
 │       ├── llm/                 # AI integration
 │       └── models/              # Data models
 ├── frontend/
@@ -177,6 +177,8 @@ MorphoStruct/
 
 ## Scaffold Categories
 
+Categories sorted alphabetically per audit specification (docs/audit/INDEX.md).
+
 ### Primitives (27 shapes)
 
 Composable building blocks with CSG (Constructive Solid Geometry) support:
@@ -188,42 +190,76 @@ Composable building blocks with CSG (Constructive Solid Geometry) support:
 | **Architectural** | Fillet, Chamfer, Slot, Counterbore, Countersink, Boss, Rib |
 | **Organic** | Branch, Bifurcation, Pore, Channel, Fiber, Membrane, Lattice Cell, Pore Array |
 
-### Skeletal Tissue (7 types)
+### Dental (3 types)
 
-Bone and cartilage scaffolds with anatomically-accurate microarchitecture:
-- **Trabecular Bone** — Porous strut network mimicking cancellous bone
-- **Osteochondral** — Gradient interface between bone and cartilage
-- **Articular Cartilage** — Zonal architecture (superficial, middle, deep)
-- **Meniscus** — C-shaped fibrocartilage with radial zones
-- **Tendon-Ligament** — Aligned crimped fiber bundles
-- **Intervertebral Disc** — Nucleus pulposus + annulus fibrosus layers
-- **Haversian Bone** — Osteons with central Haversian canals
+Dental and craniofacial scaffolds:
+- **Dentin-Pulp** — Tooth scaffold with pulp chamber
+- **Ear Auricle** — Auricular cartilage framework
+- **Nasal Septum** — Nasal cartilage partition
 
-### Organ-Specific (6 types)
-
-Tissue-specific microarchitectures:
-- **Hepatic Lobule** — Hexagonal liver functional unit
-- **Cardiac Patch** — Aligned myocardial fibers
-- **Kidney Tubule** — Proximal tubule with convolutions
-- **Lung Alveoli** — Branching respiratory tree
-- **Pancreatic Islet** — Endocrine cell clusters
-- **Liver Sinusoid** — Fenestrated capillary network
-
-### Advanced Lattices (5 types)
+### Lattice (6 types)
 
 TPMS (Triply Periodic Minimal Surfaces) and strut-based lattices:
+- **Basic Lattice** — Regular cubic/BCC lattice structure
 - **Gyroid** — Smooth minimal surface, high interconnectivity
-- **Schwarz-P** — Cubic symmetry minimal surface
-- **Octet Truss** — High strength-to-weight ratio
-- **Voronoi** — Organic-looking random cells
 - **Honeycomb** — Hexagonal prismatic cells
+- **Octet Truss** — High strength-to-weight ratio
+- **Schwarz-P** — Cubic symmetry minimal surface
+- **Voronoi** — Organic-looking random cells
+
+### Legacy (3 types)
+
+Original utility scaffolds:
+- **Porous Disc** — Disc with hexagonal/grid pores
+- **Primitive** — Basic geometric shapes (sphere, cylinder, box)
+- **Vascular Network** — Branching blood vessel tree
 
 ### Microfluidic (3 types)
 
 Lab-on-chip and perfusion scaffolds:
-- **Organ-on-Chip** — Multi-chamber microfluidic device
 - **Gradient Scaffold** — Pore size or porosity gradients
+- **Organ-on-Chip** — Multi-chamber microfluidic device
 - **Perfusable Network** — Murray's law optimized branching
+
+### Organ (6 types)
+
+Tissue-specific microarchitectures:
+- **Cardiac Patch** — Aligned myocardial fibers
+- **Hepatic Lobule** — Hexagonal liver functional unit
+- **Kidney Tubule** — Proximal tubule with convolutions
+- **Liver Sinusoid** — Fenestrated capillary network
+- **Lung Alveoli** — Branching respiratory tree
+- **Pancreatic Islet** — Endocrine cell clusters
+
+### Skeletal (7 types)
+
+Bone and cartilage scaffolds with anatomically-accurate microarchitecture:
+- **Articular Cartilage** — Zonal architecture (superficial, middle, deep)
+- **Haversian Bone** — Osteons with central Haversian canals
+- **Intervertebral Disc** — Nucleus pulposus + annulus fibrosus layers
+- **Meniscus** — C-shaped fibrocartilage with radial zones
+- **Osteochondral** — Gradient interface between bone and cartilage
+- **Tendon-Ligament** — Aligned crimped fiber bundles
+- **Trabecular Bone** — Porous strut network mimicking cancellous bone
+
+### Soft Tissue (4 types)
+
+Soft tissue scaffolds:
+- **Adipose** — Vascularized fat tissue structure
+- **Cornea** — Transparent collagen matrix
+- **Multilayer Skin** — Epidermis + dermis + subcutis
+- **Skeletal Muscle** — Aligned fiber bundle structure
+
+### Tubular (7 types)
+
+Tubular organ scaffolds:
+- **Bladder** — Hollow organ structure
+- **Blood Vessel** — Artery/capillary conduit
+- **Nerve Conduit** — Neuronal guidance channel
+- **Spinal Cord** — CNS tissue scaffold
+- **Trachea** — Cartilage-lined airway
+- **Tubular Conduit** — Cylindrical scaffold with textured surface
+- **Vascular Perfusion Dish** — Collision-aware branching network
 
 ## Technical Details
 

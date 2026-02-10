@@ -549,59 +549,62 @@ def generate_vascular_network(params: VascularParams) -> Manifold3D:
 
 #### Scaffold Categories
 
-**Original (5)**
-- `vascular_network`: Branching blood vessel networks
-- `porous_disc`: Disc with hexagonal/grid pores
-- `tubular_conduit`: Cylindrical scaffold with textured inner surface
-- `lattice`: Regular cubic/BCC lattice structure
-- `primitive`: Basic sphere, cylinder, box shapes
-
-**Skeletal (7)**
-- `trabecular_bone`: Porous bone structure with struts
-- `osteochondral`: Bone-cartilage interface scaffold
-- `articular_cartilage`: Smooth cartilage tissue structure
-- `meniscus`: C-shaped fibrocartilage scaffold
-- `tendon_ligament`: Aligned fibrous structure
-- `intervertebral_disc`: Nucleus pulposus + annulus fibrosus
-- `haversian_bone`: Osteon structure with central canal
-
-**Organ (6)**
-- `hepatic_lobule`: Hexagonal liver tissue unit
-- `cardiac_patch`: Myocardial tissue construct
-- `kidney_tubule`: Filtration unit structure
-- `lung_alveoli`: Branching respiratory units
-- `pancreatic_islet`: Endocrine cell aggregate
-- `liver_sinusoid`: Specialized capillary network
-
-**Soft Tissue (4)**
-- `multilayer_skin`: Epidermis + dermis + subcutis
-- `skeletal_muscle`: Aligned fiber bundle structure
-- `cornea`: Transparent collagen matrix
-- `adipose`: Vascularized fat tissue
-
-**Tubular (5)**
-- `blood_vessel`: Artery/capillary conduit
-- `nerve_conduit`: Neuronal guidance channel
-- `spinal_cord`: CNS tissue scaffold
-- `bladder`: Hollow organ structure
-- `trachea`: Cartilage-lined airway
+Categories and entries sorted alphabetically per audit specification.
 
 **Dental (3)**
 - `dentin_pulp`: Dental tissue unit
 - `ear_auricle`: Cartilage scaffold
 - `nasal_septum`: Nasal tissue structure
 
-**Advanced Lattice (5)**
+**Lattice (6)**
+- `lattice`: Regular cubic/BCC lattice structure
 - `gyroid`: 3D periodic minimal surface (TPMS)
-- `schwarz_p`: Schwarz P surface (TPMS)
-- `octet_truss`: Space-filling truss lattice
-- `voronoi`: Computational geometry cells
 - `honeycomb`: Hexagonal cell packing
+- `octet_truss`: Space-filling truss lattice
+- `schwarz_p`: Schwarz P surface (TPMS)
+- `voronoi`: Computational geometry cells
+
+**Legacy (3)**
+- `porous_disc`: Disc with hexagonal/grid pores
+- `primitive`: Basic sphere, cylinder, box shapes
+- `vascular_network`: Branching blood vessel networks
 
 **Microfluidic (3)**
-- `organ_on_chip`: Multi-chamber device
 - `gradient_scaffold`: Concentration gradient channels
+- `organ_on_chip`: Multi-chamber device
 - `perfusable_network`: Interconnected flow network
+
+**Organ (6)**
+- `cardiac_patch`: Myocardial tissue construct
+- `hepatic_lobule`: Hexagonal liver tissue unit
+- `kidney_tubule`: Filtration unit structure
+- `liver_sinusoid`: Specialized capillary network
+- `lung_alveoli`: Branching respiratory units
+- `pancreatic_islet`: Endocrine cell aggregate
+
+**Skeletal (7)**
+- `articular_cartilage`: Smooth cartilage tissue structure
+- `haversian_bone`: Osteon structure with central canal
+- `intervertebral_disc`: Nucleus pulposus + annulus fibrosus
+- `meniscus`: C-shaped fibrocartilage scaffold
+- `osteochondral`: Bone-cartilage interface scaffold
+- `tendon_ligament`: Aligned fibrous structure
+- `trabecular_bone`: Porous bone structure with struts
+
+**Soft Tissue (4)**
+- `adipose`: Vascularized fat tissue
+- `cornea`: Transparent collagen matrix
+- `multilayer_skin`: Epidermis + dermis + subcutis
+- `skeletal_muscle`: Aligned fiber bundle structure
+
+**Tubular (7)**
+- `bladder`: Hollow organ structure
+- `blood_vessel`: Artery/capillary conduit
+- `nerve_conduit`: Neuronal guidance channel
+- `spinal_cord`: CNS tissue scaffold
+- `trachea`: Cartilage-lined airway
+- `tubular_conduit`: Cylindrical scaffold with textured inner surface
+- `vascular_perfusion_dish`: Collision-aware branching network
 
 ---
 
@@ -963,57 +966,7 @@ curl -X POST http://localhost:8000/api/generate \
 
 ## Scaffold Types
 
-### Original (5)
-
-| Type | Description | Use Cases |
-|------|-------------|-----------|
-| **Vascular Network** | Branching blood vessel tree with Murray's law optimization | Highly vascularized tissues, nutrient transport |
-| **Porous Disc** | Circular scaffold with hexagonal or grid pore patterns | General tissue support, ease of visualization |
-| **Tubular Conduit** | Cylindrical scaffold with textured inner surface (smooth/grooved/porous) | Neural guidance, vascular conduits |
-| **Lattice** | Regular cubic or BCC lattice structure | Bone scaffolds, structural support |
-| **Primitive** | Basic geometric shapes (sphere, cylinder, box) | Testing, baseline structures |
-
-### Skeletal (7)
-
-| Type | Description | Use Cases |
-|------|-------------|-----------|
-| **Trabecular Bone** | Porous strut-based bone structure mimicking natural bone architecture | Bone regeneration, load-bearing |
-| **Osteochondral** | Bone-cartilage interface with distinct regions | Joint surface regeneration |
-| **Articular Cartilage** | Smooth cartilage tissue scaffold | Joint repair, frictionless surfaces |
-| **Meniscus** | C-shaped fibrocartilage scaffold | Knee meniscus repair |
-| **Tendon-Ligament** | Aligned fibrous structure with directional properties | Tendon/ligament regeneration |
-| **Intervertebral Disc** | Nucleus pulposus + annulus fibrosus (gel + fiber) | Spine repair, disc herniation treatment |
-| **Haversian Bone** | Osteon structure with central Haversian canal | Vascularized bone, nutrient transport |
-
-### Organ (6)
-
-| Type | Description | Use Cases |
-|------|-------------|-----------|
-| **Hepatic Lobule** | Hexagonal liver tissue unit with portal triads and central vein | Liver tissue engineering, hepatocyte culture |
-| **Cardiac Patch** | Myocardial tissue construct with contractile alignment | Heart repair, cardiac tissue regeneration |
-| **Kidney Tubule** | Filtration unit structure with podocyte arrangement | Renal tissue engineering, ultrafiltration |
-| **Lung Alveoli** | Branching respiratory units for gas exchange | Lung tissue repair, respiratory culture |
-| **Pancreatic Islet** | Endocrine cell aggregate scaffold | Diabetes treatment, insulin production |
-| **Liver Sinusoid** | Specialized capillary network with fenestrations | Hepatic function, metabolic support |
-
-### Soft Tissue (4)
-
-| Type | Description | Use Cases |
-|------|-------------|-----------|
-| **Multilayer Skin** | Epidermis + dermis + subcutis with distinct layers | Skin wound healing, reconstructive surgery |
-| **Skeletal Muscle** | Aligned fiber bundle structure | Muscle regeneration, motor function |
-| **Cornea** | Transparent collagen matrix scaffold | Vision restoration, corneal disease |
-| **Adipose** | Vascularized fat tissue structure | Soft tissue reconstruction, volume restoration |
-
-### Tubular (5)
-
-| Type | Description | Use Cases |
-|------|-------------|-----------|
-| **Blood Vessel** | Artery/capillary conduit with appropriate dimensions | Vascular grafts, bypass conduits |
-| **Nerve Conduit** | Neuronal guidance channel for axon regeneration | Nerve repair, spinal cord injury |
-| **Spinal Cord** | CNS tissue scaffold with ventral/dorsal regions | Spinal cord injury treatment |
-| **Bladder** | Hollow organ structure with smooth muscle layer | Bladder tissue engineering, urinary repair |
-| **Trachea** | Cartilage-lined airway scaffold | Airway reconstruction, breathing support |
+Categories and entries sorted alphabetically per audit specification (docs/audit/INDEX.md).
 
 ### Dental (3)
 
@@ -1023,23 +976,76 @@ curl -X POST http://localhost:8000/api/generate \
 | **Ear Auricle** | Cartilage scaffold for ear structure | Auricular reconstruction, hearing loss |
 | **Nasal Septum** | Nasal tissue structure with cartilage support | Nasal reconstruction, septoplasty |
 
-### Advanced Lattice (5)
+### Lattice (6)
 
 | Type | Description | Use Cases |
 |------|-------------|-----------|
+| **Basic Lattice** | Regular cubic or BCC lattice structure | Bone scaffolds, structural support |
 | **Gyroid** | 3D periodic minimal surface (TPMS) | High surface area, biomimetic, strength-to-weight |
-| **Schwarz P** | Schwarz P minimal surface (TPMS) | Interconnected pores, balanced properties |
-| **Octet Truss** | Space-filling truss lattice | Optimal strength, minimal mass |
-| **Voronoi** | Computational geometry cells | Hierarchical structure, randomness control |
 | **Honeycomb** | Hexagonal cell packing | Structural efficiency, directional properties |
+| **Octet Truss** | Space-filling truss lattice | Optimal strength, minimal mass |
+| **Schwarz P** | Schwarz P minimal surface (TPMS) | Interconnected pores, balanced properties |
+| **Voronoi** | Computational geometry cells | Hierarchical structure, randomness control |
+
+### Legacy (3)
+
+| Type | Description | Use Cases |
+|------|-------------|-----------|
+| **Porous Disc** | Circular scaffold with hexagonal or grid pore patterns | General tissue support, ease of visualization |
+| **Primitive** | Basic geometric shapes (sphere, cylinder, box) | Testing, baseline structures |
+| **Vascular Network** | Branching blood vessel tree with Murray's law optimization | Highly vascularized tissues, nutrient transport |
 
 ### Microfluidic (3)
 
 | Type | Description | Use Cases |
 |------|-------------|-----------|
-| **Organ-on-Chip** | Multi-chamber device with separation channels | Drug testing, tissue-tissue interfaces |
 | **Gradient Scaffold** | Concentration gradient channels | Chemotaxis studies, gradient biology |
+| **Organ-on-Chip** | Multi-chamber device with separation channels | Drug testing, tissue-tissue interfaces |
 | **Perfusable Network** | Interconnected flow network | Nutrient delivery, metabolite removal |
+
+### Organ (6)
+
+| Type | Description | Use Cases |
+|------|-------------|-----------|
+| **Cardiac Patch** | Myocardial tissue construct with contractile alignment | Heart repair, cardiac tissue regeneration |
+| **Hepatic Lobule** | Hexagonal liver tissue unit with portal triads and central vein | Liver tissue engineering, hepatocyte culture |
+| **Kidney Tubule** | Filtration unit structure with podocyte arrangement | Renal tissue engineering, ultrafiltration |
+| **Liver Sinusoid** | Specialized capillary network with fenestrations | Hepatic function, metabolic support |
+| **Lung Alveoli** | Branching respiratory units for gas exchange | Lung tissue repair, respiratory culture |
+| **Pancreatic Islet** | Endocrine cell aggregate scaffold | Diabetes treatment, insulin production |
+
+### Skeletal (7)
+
+| Type | Description | Use Cases |
+|------|-------------|-----------|
+| **Articular Cartilage** | Smooth cartilage tissue scaffold | Joint repair, frictionless surfaces |
+| **Haversian Bone** | Osteon structure with central Haversian canal | Vascularized bone, nutrient transport |
+| **Intervertebral Disc** | Nucleus pulposus + annulus fibrosus (gel + fiber) | Spine repair, disc herniation treatment |
+| **Meniscus** | C-shaped fibrocartilage scaffold | Knee meniscus repair |
+| **Osteochondral** | Bone-cartilage interface with distinct regions | Joint surface regeneration |
+| **Tendon-Ligament** | Aligned fibrous structure with directional properties | Tendon/ligament regeneration |
+| **Trabecular Bone** | Porous strut-based bone structure mimicking natural bone architecture | Bone regeneration, load-bearing |
+
+### Soft Tissue (4)
+
+| Type | Description | Use Cases |
+|------|-------------|-----------|
+| **Adipose** | Vascularized fat tissue structure | Soft tissue reconstruction, volume restoration |
+| **Cornea** | Transparent collagen matrix scaffold | Vision restoration, corneal disease |
+| **Multilayer Skin** | Epidermis + dermis + subcutis with distinct layers | Skin wound healing, reconstructive surgery |
+| **Skeletal Muscle** | Aligned fiber bundle structure | Muscle regeneration, motor function |
+
+### Tubular (7)
+
+| Type | Description | Use Cases |
+|------|-------------|-----------|
+| **Bladder** | Hollow organ structure with smooth muscle layer | Bladder tissue engineering, urinary repair |
+| **Blood Vessel** | Artery/capillary conduit with appropriate dimensions | Vascular grafts, bypass conduits |
+| **Nerve Conduit** | Neuronal guidance channel for axon regeneration | Nerve repair, spinal cord injury |
+| **Spinal Cord** | CNS tissue scaffold with ventral/dorsal regions | Spinal cord injury treatment |
+| **Trachea** | Cartilage-lined airway scaffold | Airway reconstruction, breathing support |
+| **Tubular Conduit** | Cylindrical scaffold with textured inner surface (smooth/grooved/porous) | Neural guidance, vascular conduits |
+| **Vascular Perfusion Dish** | Collision-aware branching vascular network | Perfusion studies, vascularized tissue culture |
 
 ---
 

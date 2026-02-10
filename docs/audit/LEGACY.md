@@ -99,34 +99,55 @@
 **Status**: ✅ AUDITED - COUNTS MATCH (modifications FIXED)
 
 **File Locations**:
-- Backend: `backend/app/geometry/primitives.py`
+- Backend: `backend/app/geometry/primitives/` (new registry-based module)
+- Backend (shim): `backend/app/geometry/primitives.py` (backwards compatibility)
 - Frontend Interface: `frontend/lib/types/scaffolds/legacy.ts` (lines 43-47)
 - ParamMeta: `frontend/lib/parameterMeta/legacy.ts` (lines 57-117)
+- Primitives Meta: `frontend/lib/parameterMeta/primitives.ts` (NEW - all 27 shapes)
 
 **Parameter Count**:
-- Backend params: 4
+- Backend params: 4 (shape, dimensions, modifications, resolution)
+- Backend primitives: 27 shapes (4 basic + 8 geometric + 7 architectural + 8 organic)
 - Frontend props: 4 (including optional modifications)
-- ParamMeta controls: 4 ✅ (modifications FIXED)
+- ParamMeta controls: 4 ✅ (all 27 shapes in dropdown)
 
 #### Parameter Tracing (Line-by-Line)
 
 | # | Parameter | Backend Line | Type | Default | Active/Stats | Usage Location |
 |---|-----------|--------------|------|---------|--------------|----------------|
-| 1 | `shape` | 8 | Literal['cylinder','sphere','box','cone'] | 'cylinder' | ✅ ACTIVE | L124-128: SHAPE_CREATORS dispatch |
+| 1 | `shape` | 8 | Literal[27 primitives] | 'cylinder' | ✅ ACTIVE | L124-128: PRIMITIVES registry dispatch |
 | 2 | `dimensions` | 9 | dict | {'radius_mm': 5.0, 'height_mm': 10.0} | ✅ ACTIVE | L128: passed to shape creator functions |
 | 3 | `modifications` | 10 | list[dict] | [] | ✅ ACTIVE | L130-138: applied via MODIFICATIONS dict |
 | 4 | `resolution` | 11 | int | 32 | ✅ ACTIVE | L17, L22, L36, L69, L73, L77, L136: mesh segments |
 
 **Dead Code Count**: 0 (all 4 backend params active)
 
-#### Shape Dimensions (Dynamic)
+#### Shape Categories (27 Total)
 
-| Shape | Required Dimensions | Create Function |
-|-------|---------------------|-----------------|
-| cylinder | `radius_mm`, `height_mm` | L13-17: create_cylinder() |
-| sphere | `radius_mm` | L19-22: create_sphere() |
-| box | `x_mm`, `y_mm`, `z_mm` | L24-29: create_box() |
-| cone | `bottom_radius_mm`, `top_radius_mm`, `height_mm` | L31-36: create_cone() |
+| Category | Count | Shapes |
+|----------|-------|--------|
+| Basic | 4 | cylinder, sphere, box, cone |
+| Geometric | 8 | torus, capsule, pyramid, wedge, prism, tube, ellipsoid, hemisphere |
+| Architectural | 7 | fillet, chamfer, slot, counterbore, countersink, boss, rib |
+| Organic/Bio | 8 | branch, bifurcation, pore, channel, fiber, membrane, lattice_cell, pore_array |
+
+#### New Backend Architecture
+
+The primitives module has been refactored to use a registry-based architecture:
+
+| File | Purpose |
+|------|---------|
+| `primitives/registry.py` | Decorator-based primitive registration |
+| `primitives/transforms.py` | translate/rotate/scale/mirror transforms |
+| `primitives/csg.py` | CSG tree evaluation for LLM composition |
+| `primitives/geometric.py` | 12 geometric primitives |
+| `primitives/architectural.py` | 7 architectural primitives |
+| `primitives/organic.py` | 8 organic/bio primitives |
+
+**New API Endpoints**:
+- `GET /api/primitives/list` - List all 27 primitives
+- `GET /api/primitives/schema` - Get all schemas
+- `GET /api/primitives/schema/{name}` - Get specific primitive schema
 
 #### Modification Operations
 

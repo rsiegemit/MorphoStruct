@@ -5,7 +5,7 @@ Run this to regenerate the complete tools.py file.
 """
 
 # Read existing tools.py to preserve the original 5 tools and structure
-with open('/Users/rsiegelmann/Downloads/SHED/backend/app/llm/tools.py', 'r') as f:
+with open('/Users/rsiegelmann/Downloads/MorphoStruct/backend/app/llm/tools.py', 'r') as f:
     content = f.read()
 
 # Extract the original tools (vascular_network, porous_disc, tubular_conduit, lattice, primitive, ask_clarification)

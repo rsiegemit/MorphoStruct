@@ -2,7 +2,7 @@
 
 ## ✓ Task Complete
 
-Proper logging has been implemented throughout the SHED backend. All debug print statements have been replaced with structured logging using a centralized logging configuration.
+Proper logging has been implemented throughout the MorphoStruct backend. All debug print statements have been replaced with structured logging using a centralized logging configuration.
 
 ## What Was Done
 

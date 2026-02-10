@@ -1,4 +1,4 @@
-"""Core utilities for the SHED backend."""
+"""Core utilities for the MorphoStruct backend."""
 
 from .logging import get_logger, setup_logger, app_logger
 

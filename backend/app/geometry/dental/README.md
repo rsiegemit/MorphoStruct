@@ -95,7 +95,7 @@ manifold, stats = generate_nasal_septum(params)
 
 ## Implementation Pattern
 
-All generators follow the standard SHED pattern:
+All generators follow the standard MorphoStruct pattern:
 
 1. **Dataclass Parameters**: Type-safe configuration with sensible defaults
 2. **Generate Function**: Returns `(manifold, stats)` tuple

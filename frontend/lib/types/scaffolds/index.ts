@@ -83,7 +83,7 @@ export type ScaffoldParams =
   | ({ type: ScaffoldType.DENTIN_PULP } & DentinPulpParams)
   | ({ type: ScaffoldType.EAR_AURICLE } & EarAuricleParams)
   | ({ type: ScaffoldType.NASAL_SEPTUM } & NasalSeptumParams)
-  // Advanced Lattice
+  // Lattice
   | ({ type: ScaffoldType.GYROID } & GyroidParams)
   | ({ type: ScaffoldType.SCHWARZ_P } & SchwarzPParams)
   | ({ type: ScaffoldType.OCTET_TRUSS } & OctetTrussParams)

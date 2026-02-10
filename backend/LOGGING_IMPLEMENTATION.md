@@ -1,7 +1,7 @@
 # Logging Implementation Summary
 
 ## Overview
-Implemented centralized logging throughout the SHED backend to replace debug print statements with proper structured logging.
+Implemented centralized logging throughout the MorphoStruct backend to replace debug print statements with proper structured logging.
 
 ## Changes Made
 
@@ -97,7 +97,7 @@ logger.exception(f"Chat processing failed: {e}")
   - Database initialization
 
 ```python
-logger.info("Starting SHED backend API server")
+logger.info("Starting MorphoStruct backend API server")
 logger.info(f"App name: {settings.app_name}, Debug: {settings.debug}")
 logger.info("Database initialized successfully")
 ```
@@ -141,7 +141,7 @@ Files `/backend/app/llm/update_tools.py` and `/backend/app/llm/generate_complete
 
 1. **File Logging**: Enable persistent logging to files in production
    ```python
-   logger = setup_logger(__name__, level=logging.INFO, log_file=Path("/var/log/shed/app.log"))
+   logger = setup_logger(__name__, level=logging.INFO, log_file=Path("/var/log/morphostruct/app.log"))
    ```
 
 2. **Log Rotation**: Add rotating file handlers for log management

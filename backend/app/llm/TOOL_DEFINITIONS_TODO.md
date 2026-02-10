@@ -65,7 +65,7 @@ Each tool follows this structure:
 24. generate_ear_auricle
 25. generate_nasal_septum
 
-**Advanced Lattice (5):**
+**Lattice (6):**
 26. generate_gyroid
 27. generate_schwarz_p
 28. generate_octet_truss

@@ -1966,7 +1966,7 @@ TOOL_TO_SCAFFOLD_TYPE: dict[str, str] = {
     "generate_dentin_pulp": "dentin_pulp",
     "generate_ear_auricle": "ear_auricle",
     "generate_nasal_septum": "nasal_septum",
-    # Advanced Lattice (5)
+    # Lattice (6)
     "generate_gyroid": "gyroid",
     "generate_schwarz_p": "schwarz_p",
     "generate_octet_truss": "octet_truss",
@@ -2165,7 +2165,7 @@ DEFAULT_SUGGESTIONS: dict[str, list[str]] = {
         "Switch curve type",
         "Modify dimensions",
     ],
-    # Advanced Lattice
+    # Lattice
     "gyroid": [
         "Adjust cell size",
         "Change wall thickness",

@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import { listScaffolds, getScaffold, deleteScaffold, duplicateScaffold, SavedScaffold } from '@/lib/api/scaffolds';
+import { generateScaffold, exportSTL, downloadBlob } from '@/lib/api/scaffold';
+import { ScaffoldType } from '@/lib/types/scaffolds';
 import { NavHeader } from '@/components/NavHeader';
 
 type ViewMode = 'grid' | 'list';
@@ -22,6 +24,8 @@ export default function LibraryPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [scaffoldToDelete, setScaffoldToDelete] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [bulkDownloading, setBulkDownloading] = useState(false);
 
   useEffect(() => {
     loadScaffolds();
@@ -136,6 +140,75 @@ export default function LibraryPage() {
     } catch (error) {
       console.error('Failed to delete scaffolds:', error);
       showMessage('BULK DELETION FAILED');
+    }
+  };
+
+  const handleDownload = async (scaffold: SavedScaffold) => {
+    setDownloadingIds(prev => new Set([...prev, scaffold.uuid]));
+    try {
+      const result = await generateScaffold(
+        scaffold.type as ScaffoldType,
+        scaffold.parameters,
+        false,
+        60
+      );
+      const blob = await exportSTL(result.scaffold_id, 'binary', 60);
+      const safeName = scaffold.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      downloadBlob(blob, `${safeName}.stl`);
+      showMessage(`DOWNLOADED: ${scaffold.name}`);
+    } catch (error) {
+      console.error('Download failed:', error);
+      showMessage(`DOWNLOAD FAILED: ${scaffold.name}`);
+    } finally {
+      setDownloadingIds(prev => {
+        const next = new Set(prev);
+        next.delete(scaffold.uuid);
+        return next;
+      });
+    }
+  };
+
+  const handleBulkDownload = async () => {
+    const toDownload = scaffolds.filter(s => selectedScaffolds.has(s.uuid));
+    if (toDownload.length === 0) return;
+
+    setBulkDownloading(true);
+    showMessage(`DOWNLOADING ${toDownload.length} SCAFFOLD${toDownload.length > 1 ? 'S' : ''}...`);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Download sequentially to avoid overwhelming the backend
+    for (const scaffold of toDownload) {
+      setDownloadingIds(prev => new Set([...prev, scaffold.uuid]));
+      try {
+        const result = await generateScaffold(
+          scaffold.type as ScaffoldType,
+          scaffold.parameters,
+          false,
+          60
+        );
+        const blob = await exportSTL(result.scaffold_id, 'binary', 60);
+        const safeName = scaffold.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+        downloadBlob(blob, `${safeName}.stl`);
+        successCount++;
+      } catch (error) {
+        console.error(`Download failed for ${scaffold.name}:`, error);
+        failCount++;
+      } finally {
+        setDownloadingIds(prev => {
+          const next = new Set(prev);
+          next.delete(scaffold.uuid);
+          return next;
+        });
+      }
+    }
+
+    setBulkDownloading(false);
+    if (failCount === 0) {
+      showMessage(`ALL ${successCount} SCAFFOLDS DOWNLOADED`);
+    } else {
+      showMessage(`DOWNLOADED ${successCount}, FAILED ${failCount}`);
     }
   };
 
@@ -303,6 +376,13 @@ export default function LibraryPage() {
                 CLEAR SELECTION
               </button>
               <button
+                onClick={handleBulkDownload}
+                disabled={bulkDownloading}
+                className="px-4 py-2 bg-emerald-400/20 border-2 border-emerald-400 text-emerald-400 font-bold text-sm hover:bg-emerald-400/30 transition-colors disabled:opacity-50"
+              >
+                {bulkDownloading ? 'DOWNLOADING...' : 'DOWNLOAD SELECTED'}
+              </button>
+              <button
                 onClick={handleBulkDelete}
                 className="px-4 py-2 bg-red-500/20 border-2 border-red-500 text-red-400 font-bold text-sm hover:bg-red-500/30 transition-colors"
               >
@@ -402,6 +482,20 @@ export default function LibraryPage() {
                       LOAD
                     </button>
                     <button
+                      onClick={() => handleDownload(scaffold)}
+                      disabled={downloadingIds.has(scaffold.uuid)}
+                      className="px-4 py-2 bg-white/5 border-2 border-white/20 text-white font-bold text-sm hover:border-emerald-400 transition-colors disabled:opacity-50"
+                      title="Download STL"
+                    >
+                      {downloadingIds.has(scaffold.uuid) ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-emerald-400 rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
                       onClick={() => handleDuplicate(scaffold.uuid)}
                       className="px-4 py-2 bg-white/5 border-2 border-white/20 text-white font-bold text-sm hover:border-emerald-400 transition-colors"
                       title="Duplicate"
@@ -484,6 +578,13 @@ export default function LibraryPage() {
                     className="px-6 py-2 bg-emerald-400 text-black font-bold text-sm tracking-tight hover:bg-emerald-300 transition-colors"
                   >
                     LOAD
+                  </button>
+                  <button
+                    onClick={() => handleDownload(scaffold)}
+                    disabled={downloadingIds.has(scaffold.uuid)}
+                    className="px-4 py-2 bg-white/5 border-2 border-white/20 text-white font-bold text-sm hover:border-emerald-400 transition-colors disabled:opacity-50"
+                  >
+                    {downloadingIds.has(scaffold.uuid) ? 'DOWNLOADING...' : 'DOWNLOAD'}
                   </button>
                   <button
                     onClick={() => handleDuplicate(scaffold.uuid)}

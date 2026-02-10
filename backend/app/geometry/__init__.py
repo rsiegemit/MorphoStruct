@@ -1,62 +1,62 @@
 """
 Geometry module for scaffold generation.
 
-Provides generators for various scaffold geometries:
+Provides generators for various scaffold geometries (alphabetical by category):
 
-Original Types:
-- Vascular networks (branching tree structures)
-- Primitive shapes (cylinder, sphere, box, cone)
-- Tubular conduits (hollow tubes)
-- Porous discs (cylindrical scaffolds with pore patterns)
-- Lattice structures (cubic and BCC)
-
-Skeletal Tissue (7 types):
-- Trabecular bone (cancellous/spongy bone)
-- Osteochondral (bone-cartilage gradient)
-- Articular cartilage (zonal architecture)
-- Meniscus (fibrocartilage with wedge shape)
-- Tendon/ligament (aligned crimped fibers)
-- Intervertebral disc (annulus fibrosus + nucleus pulposus)
-- Haversian bone (cortical bone with osteons)
-
-Organ-Specific (6 types):
-- Hepatic lobule (hexagonal liver lobule units)
-- Cardiac patch (aligned microfibers)
-- Kidney tubule (convoluted tubules)
-- Lung alveoli (branching airways)
-- Pancreatic islet (spherical clusters)
-- Liver sinusoid (fenestrated channels)
-
-Soft Tissue (4 types):
-- Multilayer skin (epidermis/dermis/hypodermis)
-- Skeletal muscle (aligned myofibers)
-- Cornea (curved dome with lamellae)
-- Adipose (honeycomb structure)
-
-Tubular Organs (6 types):
-- Blood vessel (multi-layer vascular graft)
-- Nerve conduit (multi-channel guidance)
-- Spinal cord (gray/white matter zones)
-- Bladder (dome-shaped)
-- Trachea (C-shaped cartilage rings)
-- Vascular perfusion dish (collision-aware branching network)
-
-Dental/Craniofacial (3 types):
+Dental (3 types):
 - Dentin-pulp (tooth scaffold)
 - Ear auricle (auricular framework)
 - Nasal septum (curved cartilage)
 
-Advanced Lattice (5 types):
+Lattice (6 types):
+- Basic lattice (cubic and BCC structures)
 - Gyroid (TPMS)
-- Schwarz P (TPMS)
-- Octet truss (high strength-to-weight)
-- Voronoi (organic cellular)
 - Honeycomb (hexagonal cells)
+- Octet truss (high strength-to-weight)
+- Schwarz P (TPMS)
+- Voronoi (organic cellular)
+
+Legacy (3 types):
+- Porous discs (cylindrical scaffolds with pore patterns)
+- Primitive shapes (cylinder, sphere, box, cone)
+- Vascular networks (branching tree structures)
 
 Microfluidic (3 types):
-- Organ-on-chip (microfluidic chambers)
 - Gradient scaffold (porosity gradient)
+- Organ-on-chip (microfluidic chambers)
 - Perfusable network (Murray's law vascular)
+
+Organ (6 types):
+- Cardiac patch (aligned microfibers)
+- Hepatic lobule (hexagonal liver lobule units)
+- Kidney tubule (convoluted tubules)
+- Liver sinusoid (fenestrated channels)
+- Lung alveoli (branching airways)
+- Pancreatic islet (spherical clusters)
+
+Skeletal (7 types):
+- Articular cartilage (zonal architecture)
+- Haversian bone (cortical bone with osteons)
+- Intervertebral disc (annulus fibrosus + nucleus pulposus)
+- Meniscus (fibrocartilage with wedge shape)
+- Osteochondral (bone-cartilage gradient)
+- Tendon/ligament (aligned crimped fibers)
+- Trabecular bone (cancellous/spongy bone)
+
+Soft Tissue (4 types):
+- Adipose (honeycomb structure)
+- Cornea (curved dome with lamellae)
+- Multilayer skin (epidermis/dermis/hypodermis)
+- Skeletal muscle (aligned myofibers)
+
+Tubular (7 types):
+- Bladder (dome-shaped)
+- Blood vessel (multi-layer vascular graft)
+- Nerve conduit (multi-channel guidance)
+- Spinal cord (gray/white matter zones)
+- Trachea (C-shaped cartilage rings)
+- Tubular conduit (hollow tubes)
+- Vascular perfusion dish (collision-aware branching network)
 """
 
 # Core utilities
@@ -69,7 +69,7 @@ from .core import (
     get_manifold_module,
 )
 
-# Original generators
+# Legacy generators
 from .vascular import (
     VascularParams,
     make_cyl,

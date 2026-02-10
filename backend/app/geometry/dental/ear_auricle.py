@@ -81,10 +81,10 @@ class EarAuricleParams:
 
     # === Mechanical Properties ===
     mechanical_modulus_ratio: float = 0.5  # ratio vs native cartilage (target ~0.5-0.8)
-    target_porosity: float = 0.7  # target void fraction for cell infiltration
+    target_porosity: float = 0.3  # target void fraction for cell infiltration (moderate default)
 
     # === Surface Features ===
-    enable_surface_texture: bool = True  # surface microstructure
+    enable_surface_texture: bool = True  # surface microstructure for cell attachment
     texture_roughness: float = 0.3  # 0-1, surface roughness intensity
 
     # === Generation Settings ===
@@ -187,7 +187,7 @@ def _create_helix(
     helix_cut_box = m3d.Manifold.cube([cut_width, ear_depth * 3, ear_height * 3], center=True)
     helix_cut_box = helix_cut_box.translate([ear_width / 4 + helix_width_scaled / 4, 0, 0])
 
-    helix = helix_torus ^ helix_cut_box
+    helix = m3d.Manifold.batch_boolean([helix_torus, helix_cut_box], m3d.OpType.Intersect)
 
     # Apply randomness for natural variation
     if params.randomness > 0:
@@ -506,65 +506,96 @@ def _add_surface_texture(
     Add surface texture (micro-bumps) for improved cell attachment.
 
     Uses enable_surface_texture, texture_roughness, pore_size, and pore_shape.
-    Creates small protrusions based on strut parameters.
+    Creates small protrusions that are clipped to the actual surface.
+    Bumps are intersected with an expanded ear shell to ensure they attach properly.
     """
     if not params.enable_surface_texture or params.texture_roughness <= 0:
         return ear
 
     # Get bounding box for texture placement
-    # bbox returns (min_x, min_y, min_z, max_x, max_y, max_z)
     bbox = ear.bounding_box()
     min_pt = (bbox[0], bbox[1], bbox[2])
     max_pt = (bbox[3], bbox[4], bbox[5])
 
-    # Calculate texture bump parameters
-    bump_radius = params.strut_width * 0.3 * (0.5 + params.texture_roughness * 0.5)
-    bump_spacing = params.strut_spacing * 2
+    # Calculate texture bump parameters - make bumps larger for visibility
+    bump_radius = params.strut_width * (0.5 + params.texture_roughness * 0.5)
+    bump_spacing = params.strut_spacing * 1.5
 
     # Limit number of bumps for performance
     ear_width_bb = max_pt[0] - min_pt[0]
     ear_height_bb = max_pt[2] - min_pt[2]
+    ear_depth_bb = max_pt[1] - min_pt[1]
 
-    # Generate texture bumps on outer surface
-    n_bumps_x = min(20, int(ear_width_bb / bump_spacing))
-    n_bumps_z = min(30, int(ear_height_bb / bump_spacing))
+    # Generate texture bumps covering the volume
+    n_bumps_x = min(15, int(ear_width_bb / bump_spacing))
+    n_bumps_y = min(8, int(ear_depth_bb / bump_spacing))
+    n_bumps_z = min(20, int(ear_height_bb / bump_spacing))
 
-    if n_bumps_x < 3 or n_bumps_z < 3:
+    if n_bumps_x < 2 or n_bumps_z < 2:
         return ear
 
     texture_bumps = []
     bump_res = max(4, res // 4)
 
+    # Create bumps in a 3D grid - they will be clipped to surface later
     for i in range(n_bumps_x):
-        for j in range(n_bumps_z):
-            # Position on surface with some randomness
-            x = min_pt[0] + (i + 0.5 + (rng.random() - 0.5) * 0.5) * bump_spacing
-            z = min_pt[2] + (j + 0.5 + (rng.random() - 0.5) * 0.5) * bump_spacing
+        for j in range(n_bumps_y):
+            for k in range(n_bumps_z):
+                # Position with some randomness
+                x = min_pt[0] + (i + 0.5 + (rng.random() - 0.5) * 0.3) * bump_spacing
+                y = min_pt[1] + (j + 0.5 + (rng.random() - 0.5) * 0.3) * bump_spacing
+                z = min_pt[2] + (k + 0.5 + (rng.random() - 0.5) * 0.3) * bump_spacing
 
-            # Vary bump size based on roughness
-            size_var = 1.0 + (rng.random() - 0.5) * params.texture_roughness * 0.5
+                # Vary bump size based on roughness
+                size_var = 1.0 + (rng.random() - 0.5) * params.texture_roughness * 0.5
 
-            if params.pore_shape == 'hexagonal':
-                # Hexagonal bumps (approximated with low-res cylinder)
-                bump = m3d.Manifold.cylinder(
-                    bump_radius * size_var * 2,
-                    bump_radius * size_var,
-                    bump_radius * size_var * 0.7,
-                    6  # hexagonal
-                )
-            else:
-                # Circular bumps (spheres)
-                bump = m3d.Manifold.sphere(bump_radius * size_var, bump_res)
+                if params.pore_shape == 'hexagonal':
+                    bump = m3d.Manifold.cylinder(
+                        bump_radius * size_var * 2,
+                        bump_radius * size_var,
+                        bump_radius * size_var * 0.7,
+                        6
+                    )
+                    # Random rotation for variety
+                    bump = bump.rotate([rng.random() * 90, rng.random() * 90, 0])
+                else:
+                    bump = m3d.Manifold.sphere(bump_radius * size_var, bump_res)
 
-            # Position on the positive Y surface (outer)
-            y = max_pt[1] * 0.9
-            bump = bump.translate([x, y, z])
-            texture_bumps.append(bump)
+                bump = bump.translate([x, y, z])
+                texture_bumps.append(bump)
 
-    # Combine ear with texture (limited set for performance)
-    if texture_bumps:
-        texture_combined = batch_union(texture_bumps[:100])  # Limit for performance
-        ear = ear + texture_combined
+    if not texture_bumps:
+        return ear
+
+    # Limit bumps for performance
+    texture_bumps = texture_bumps[:200]
+    texture_combined = batch_union(texture_bumps)
+
+    if texture_combined is None:
+        return ear
+
+    # Create expanded ear shell for intersection
+    # Scale from center of bounding box
+    center_x = (min_pt[0] + max_pt[0]) / 2
+    center_y = (min_pt[1] + max_pt[1]) / 2
+    center_z = (min_pt[2] + max_pt[2]) / 2
+
+    expand_factor = 1 + (bump_radius * 2) / min(ear_width_bb, ear_height_bb, ear_depth_bb)
+
+    # Move to origin, scale, move back
+    expanded_ear = ear.translate([-center_x, -center_y, -center_z])
+    expanded_ear = expanded_ear.scale([expand_factor, expand_factor, expand_factor])
+    expanded_ear = expanded_ear.translate([center_x, center_y, center_z])
+
+    # Intersect bumps with expanded ear to keep only surface-touching parts
+    surface_bumps = m3d.Manifold.batch_boolean([texture_combined, expanded_ear], m3d.OpType.Intersect)
+
+    # Subtract original ear to get only the protruding parts
+    protruding_bumps = surface_bumps - ear
+
+    # Add protruding parts back to ear
+    if protruding_bumps.volume() > 0:
+        ear = ear + protruding_bumps
 
     return ear
 
@@ -902,7 +933,7 @@ def generate_ear_auricle_from_dict(params: dict) -> tuple[m3d.Manifold, dict]:
 
         # Mechanical Properties
         mechanical_modulus_ratio=params.get('mechanical_modulus_ratio', 0.5),
-        target_porosity=params.get('target_porosity', 0.7),
+        target_porosity=params.get('target_porosity', 0.3),
 
         # Surface Features
         enable_surface_texture=params.get('enable_surface_texture', True),

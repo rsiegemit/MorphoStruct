@@ -8,60 +8,60 @@
 // ============================================================================
 
 export enum ScaffoldType {
-  // Existing
-  VASCULAR_NETWORK = 'vascular_network',
-  POROUS_DISC = 'porous_disc',
-  TUBULAR_CONDUIT = 'tubular_conduit',
-  LATTICE = 'lattice',
-  PRIMITIVE = 'primitive',
-
-  // Skeletal (7)
-  TRABECULAR_BONE = 'trabecular_bone',
-  OSTEOCHONDRAL = 'osteochondral',
-  ARTICULAR_CARTILAGE = 'articular_cartilage',
-  MENISCUS = 'meniscus',
-  TENDON_LIGAMENT = 'tendon_ligament',
-  INTERVERTEBRAL_DISC = 'intervertebral_disc',
-  HAVERSIAN_BONE = 'haversian_bone',
-
-  // Organ (6)
-  HEPATIC_LOBULE = 'hepatic_lobule',
-  CARDIAC_PATCH = 'cardiac_patch',
-  KIDNEY_TUBULE = 'kidney_tubule',
-  LUNG_ALVEOLI = 'lung_alveoli',
-  PANCREATIC_ISLET = 'pancreatic_islet',
-  LIVER_SINUSOID = 'liver_sinusoid',
-
-  // Soft Tissue (4)
-  MULTILAYER_SKIN = 'multilayer_skin',
-  SKELETAL_MUSCLE = 'skeletal_muscle',
-  CORNEA = 'cornea',
-  ADIPOSE = 'adipose',
-
-  // Tubular (6)
-  BLOOD_VESSEL = 'blood_vessel',
-  NERVE_CONDUIT = 'nerve_conduit',
-  SPINAL_CORD = 'spinal_cord',
-  BLADDER = 'bladder',
-  TRACHEA = 'trachea',
-  VASCULAR_PERFUSION_DISH = 'vascular_perfusion_dish',
-
   // Dental (3)
   DENTIN_PULP = 'dentin_pulp',
   EAR_AURICLE = 'ear_auricle',
   NASAL_SEPTUM = 'nasal_septum',
 
-  // Advanced Lattice (5)
+  // Lattice (6)
   GYROID = 'gyroid',
-  SCHWARZ_P = 'schwarz_p',
-  OCTET_TRUSS = 'octet_truss',
-  VORONOI = 'voronoi',
   HONEYCOMB = 'honeycomb',
+  LATTICE = 'lattice',
+  OCTET_TRUSS = 'octet_truss',
+  SCHWARZ_P = 'schwarz_p',
+  VORONOI = 'voronoi',
+
+  // Legacy (3)
+  POROUS_DISC = 'porous_disc',
+  PRIMITIVE = 'primitive',
+  VASCULAR_NETWORK = 'vascular_network',
 
   // Microfluidic (3)
-  ORGAN_ON_CHIP = 'organ_on_chip',
   GRADIENT_SCAFFOLD = 'gradient_scaffold',
+  ORGAN_ON_CHIP = 'organ_on_chip',
   PERFUSABLE_NETWORK = 'perfusable_network',
+
+  // Organ (6)
+  CARDIAC_PATCH = 'cardiac_patch',
+  HEPATIC_LOBULE = 'hepatic_lobule',
+  KIDNEY_TUBULE = 'kidney_tubule',
+  LIVER_SINUSOID = 'liver_sinusoid',
+  LUNG_ALVEOLI = 'lung_alveoli',
+  PANCREATIC_ISLET = 'pancreatic_islet',
+
+  // Skeletal (7)
+  ARTICULAR_CARTILAGE = 'articular_cartilage',
+  HAVERSIAN_BONE = 'haversian_bone',
+  INTERVERTEBRAL_DISC = 'intervertebral_disc',
+  MENISCUS = 'meniscus',
+  OSTEOCHONDRAL = 'osteochondral',
+  TENDON_LIGAMENT = 'tendon_ligament',
+  TRABECULAR_BONE = 'trabecular_bone',
+
+  // Soft Tissue (4)
+  ADIPOSE = 'adipose',
+  CORNEA = 'cornea',
+  MULTILAYER_SKIN = 'multilayer_skin',
+  SKELETAL_MUSCLE = 'skeletal_muscle',
+
+  // Tubular (7)
+  BLADDER = 'bladder',
+  BLOOD_VESSEL = 'blood_vessel',
+  NERVE_CONDUIT = 'nerve_conduit',
+  SPINAL_CORD = 'spinal_cord',
+  TRACHEA = 'trachea',
+  TUBULAR_CONDUIT = 'tubular_conduit',
+  VASCULAR_PERFUSION_DISH = 'vascular_perfusion_dish',
 }
 
 export enum PorePattern {

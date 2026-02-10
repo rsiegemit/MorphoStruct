@@ -447,18 +447,24 @@ def generate_honeycomb_walls(
     circumradius = apothem / np.cos(np.pi / 6)  # Distance from center to vertex
 
     # Spacing depends on orientation
+    # For proper honeycomb tessellation:
+    # - Rows alternate offset by half the horizontal spacing
+    # - Adjacent hexagons share edges at vertices
+    # - Within each row, hexagons are spaced so diagonal edges connect
     if orientation == 'pointy_top':
         # For pointy-top: vertices point up/down
-        # Horizontal spacing is flat-to-flat
-        # Vertical spacing involves the circumradius
-        h_spacing = cell_size  # flat-to-flat
+        # Horizontal spacing = 3 * apothem (= 1.5 * cell_size)
+        # Vertical spacing = 1.5 * circumradius
+        # Row offset = half of h_spacing
+        h_spacing = 3 * apothem
         v_spacing = 1.5 * circumradius
     else:
         # For flat-top: flat edges top/bottom
-        # Horizontal spacing involves circumradius
-        # Vertical spacing is flat-to-flat
-        h_spacing = 1.5 * circumradius
-        v_spacing = cell_size
+        # Horizontal spacing = 3 * circumradius
+        # Vertical spacing = apothem
+        # Row offset = 1.5 * circumradius (half of h_spacing)
+        h_spacing = 3 * circumradius
+        v_spacing = apothem
 
     # Calculate or use specified cell counts
     if num_cells_x is not None:
@@ -479,10 +485,11 @@ def generate_honeycomb_walls(
         y_offset = row * v_spacing
 
         # Offset every other row for proper tessellation
+        # Offset should be half of h_spacing for proper hexagon nesting
         if orientation == 'pointy_top':
-            x_offset = (cell_size * 0.5) if (row % 2) else 0
+            x_offset = (1.5 * apothem) if (row % 2) else 0
         else:
-            x_offset = (circumradius * 0.75) if (row % 2) else 0
+            x_offset = (1.5 * circumradius) if (row % 2) else 0
 
         for col in range(nx + 1):
             cx = col * h_spacing + x_offset
@@ -654,9 +661,9 @@ def generate_honeycomb(params: HoneycombParams) -> tuple[m3d.Manifold, dict]:
         perforation_union = batch_union(perforations)
         result = result - perforation_union
 
-    # Clip to bounding box (intersection, not XOR)
+    # Clip to bounding box (intersection)
     clip_box = m3d.Manifold.cube([bx, by, height])
-    result = result & clip_box
+    result = m3d.Manifold.batch_boolean([result, clip_box], m3d.OpType.Intersect)
 
     # Calculate statistics
     mesh = result.to_mesh()
@@ -670,11 +677,11 @@ def generate_honeycomb(params: HoneycombParams) -> tuple[m3d.Manifold, dict]:
     circumradius = apothem / np.cos(np.pi / 6)
 
     if orientation == 'pointy_top':
-        h_spacing = cell_size
+        h_spacing = 3 * apothem
         v_spacing = 1.5 * circumradius
     else:
-        h_spacing = 1.5 * circumradius
-        v_spacing = cell_size
+        h_spacing = 3 * circumradius
+        v_spacing = apothem
 
     cells_x = params.num_cells_x if params.num_cells_x is not None else int(bx / h_spacing)
     cells_y = params.num_cells_y if params.num_cells_y is not None else int(by / v_spacing)

@@ -97,7 +97,7 @@ class TendonLigamentParams:
 
     # Surface characteristics
     surface_roughness: float = 0.02  # Surface texture
-    enable_surface_texture: bool = True  # Textured exterior
+    enable_surface_texture: bool = True  # Textured exterior for cell attachment
 
     # Randomization
     position_noise: float = 0.05  # Random position jitter
@@ -1148,6 +1148,9 @@ def _apply_surface_texture(
 
     Biological context: Surface roughness (1-100 μm features) is
     important for cell attachment and migration in tissue scaffolds.
+
+    Bumps are clipped to only appear where they touch the actual surface,
+    avoiding floating artifacts.
     """
     if roughness <= 0:
         return manifold
@@ -1164,55 +1167,71 @@ def _apply_surface_texture(
     # Spacing between features (4x the radius for balanced coverage)
     spacing = feature_radius * 4.0
 
-    # Create bumps on top and bottom surfaces (z-direction)
+    # Create bumps throughout the volume (will be clipped to surface)
     bumps = []
 
     # Limit the number of features for performance
     max_features = 200
     feature_count = 0
 
-    # Sample points on top and bottom surfaces
+    # Sample points throughout volume
     x_min, y_min, z_min = min_pt
     x_max, y_max, z_max = max_pt
 
-    # Generate features on top surface (z_max)
+    # Generate features in 3D grid
     x = x_min
     while x <= x_max and feature_count < max_features:
         y = y_min
         while y <= y_max and feature_count < max_features:
-            # Add some randomness to position
-            jitter_x = rng.uniform(-spacing * 0.3, spacing * 0.3)
-            jitter_y = rng.uniform(-spacing * 0.3, spacing * 0.3)
+            z = z_min
+            while z <= z_max and feature_count < max_features:
+                # Add some randomness to position
+                jitter_x = rng.uniform(-spacing * 0.3, spacing * 0.3)
+                jitter_y = rng.uniform(-spacing * 0.3, spacing * 0.3)
+                jitter_z = rng.uniform(-spacing * 0.3, spacing * 0.3)
 
-            bump = m3d.Manifold.sphere(feature_radius, resolution)
-            bump = bump.translate([x + jitter_x, y + jitter_y, z_max])
-            bumps.append(bump)
-            feature_count += 1
+                bump = m3d.Manifold.sphere(feature_radius, max(4, resolution // 4))
+                bump = bump.translate([x + jitter_x, y + jitter_y, z + jitter_z])
+                bumps.append(bump)
+                feature_count += 1
 
+                z += spacing
             y += spacing
         x += spacing
 
-    # Generate features on bottom surface (z_min)
-    x = x_min
-    while x <= x_max and feature_count < max_features:
-        y = y_min
-        while y <= y_max and feature_count < max_features:
-            # Add some randomness to position
-            jitter_x = rng.uniform(-spacing * 0.3, spacing * 0.3)
-            jitter_y = rng.uniform(-spacing * 0.3, spacing * 0.3)
+    if not bumps:
+        return manifold
 
-            bump = m3d.Manifold.sphere(feature_radius, resolution)
-            bump = bump.translate([x + jitter_x, y + jitter_y, z_min])
-            bumps.append(bump)
-            feature_count += 1
+    bump_union = batch_union(bumps)
+    if bump_union is None:
+        return manifold
 
-            y += spacing
-        x += spacing
+    # Create expanded manifold for intersection testing
+    center_x = (x_min + x_max) / 2
+    center_y = (y_min + y_max) / 2
+    center_z = (z_min + z_max) / 2
 
-    # Union bumps to manifold
-    if bumps:
-        bump_union = batch_union(bumps)
-        manifold = manifold + bump_union
+    width = x_max - x_min
+    height = y_max - y_min
+    depth = z_max - z_min
+    min_dim = min(width, height, depth)
+
+    expand_factor = 1 + (feature_radius * 2) / max(min_dim, 0.1)
+
+    # Move to origin, scale, move back
+    expanded = manifold.translate([-center_x, -center_y, -center_z])
+    expanded = expanded.scale([expand_factor, expand_factor, expand_factor])
+    expanded = expanded.translate([center_x, center_y, center_z])
+
+    # Intersect bumps with expanded manifold to keep only surface-touching parts
+    surface_bumps = m3d.Manifold.batch_boolean([bump_union, expanded], m3d.OpType.Intersect)
+
+    # Subtract original manifold to get only the protruding parts
+    protruding_bumps = surface_bumps - manifold
+
+    # Add protruding parts back to manifold
+    if protruding_bumps.volume() > 0:
+        manifold = manifold + protruding_bumps
 
     return manifold
 

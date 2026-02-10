@@ -1,5 +1,5 @@
 """
-API routers for SHED scaffold generator.
+API routers for MorphoStruct scaffold generator.
 """
 
 from .scaffolds import router as scaffolds_router

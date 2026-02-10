@@ -419,9 +419,16 @@ export const VASCULAR_PERFUSION_DISH_META: Record<string, ParamMeta> = {
 
   // === Geometry Dimensions ===
   outer_radius_mm: { type: 'number', label: 'Outer Radius', min: 1, max: 20, step: 0.5, unit: 'mm', description: 'Outer cylinder radius' },
+  rim_width: { type: 'number', label: 'Rim Width', min: 0.1, max: 2, step: 0.02, unit: 'mm', description: 'Thickness of the rim wall (entire height)' },
   height_mm: { type: 'number', label: 'Height', min: 0.5, max: 10, step: 0.1, unit: 'mm', description: 'Total scaffold height' },
   inlet_radius_mm: { type: 'number', label: 'Inlet Radius', min: 0.1, max: 2, step: 0.05, unit: 'mm', description: 'Inlet channel radius' },
   rim_height_mm: { type: 'number', label: 'Rim Height', min: 0, max: 3, step: 0.1, unit: 'mm', description: 'Height of rim around dish edge' },
+
+  // === Bottom Section ===
+  show_bottom: { type: 'boolean', label: 'Bottom Section', description: 'Add a bottom section with solid floor and tapered void' },
+  bottom_section_height: { type: 'number', label: 'Bottom Section Height', min: 0.1, max: 3, step: 0.05, unit: 'mm', description: 'Total height of the bottom section' },
+  bottom_radius: { type: 'number', label: 'Bottom Radius', min: 0.5, max: 4.5, step: 0.1, unit: 'mm', description: 'Inner radius at floor (void tapers from wider to this)' },
+
   flip_upside_down: { type: 'boolean', label: 'Flip Upside Down', description: 'Flip scaffold 180° for export' },
   seed: { type: 'number', label: 'Random Seed', min: 0, max: 99999, step: 1, description: 'Seed for reproducible randomization', advanced: true },
   resolution: { type: 'number', label: 'Resolution', min: 6, max: 32, step: 2, description: 'Mesh resolution (affects quality and performance)', advanced: true },

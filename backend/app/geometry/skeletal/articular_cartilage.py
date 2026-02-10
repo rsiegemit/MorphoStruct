@@ -92,7 +92,7 @@ class ArticularCartilageParams:
 
     # Surface characteristics
     surface_roughness: float = 0.05  # Articular surface roughness
-    enable_surface_texture: bool = True  # Textured articular surface
+    enable_surface_texture: bool = True  # Textured articular surface (dimples)
 
     # Tidemark (calcified cartilage interface)
     enable_tidemark_layer: bool = False  # Include calcified cartilage zone

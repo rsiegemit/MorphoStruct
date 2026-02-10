@@ -603,7 +603,7 @@ def generate_trabecular_bone(params: TrabecularBoneParams) -> tuple[m3d.Manifold
     # Clip to original bounding box (accounting for anisotropy)
     clip_z = bz * params.anisotropy_ratio * params.fabric_tensor_eigenratio
     clip_box = m3d.Manifold.cube([bx, by, clip_z])
-    result = result & clip_box
+    result = m3d.Manifold.batch_boolean([result, clip_box], m3d.OpType.Intersect)
 
     # Calculate statistics
     mesh = result.to_mesh()

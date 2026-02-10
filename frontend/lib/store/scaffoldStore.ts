@@ -297,10 +297,14 @@ const DEFAULT_PARAMS: Record<ScaffoldType, Record<string, any>> = {
     deterministic: false,
     tips_down: false,
     outer_radius_mm: 4.875,
+    rim_width: 0.3,
     height_mm: 2.0,
     inlet_radius_mm: 0.35,
     seed: 42,
     resolution: 12,
+    show_bottom: false,
+    bottom_section_height: 0.5,
+    bottom_radius: 3.0,
   },
   // Dental
   [ScaffoldType.DENTIN_PULP]: {
@@ -326,7 +330,7 @@ const DEFAULT_PARAMS: Record<ScaffoldType, Record<string, any>> = {
     curvature_radius: 75.0,
     curve_type: 'single',
   },
-  // Advanced Lattice
+  // Lattice
   [ScaffoldType.GYROID]: {
     bounding_box_mm: { x: 10.0, y: 10.0, z: 10.0 },
     cell_size_mm: 2.0,

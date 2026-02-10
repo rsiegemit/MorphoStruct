@@ -345,7 +345,7 @@ start_both() {
     open_browser "http://localhost:3000"
 
     print_info "Press Ctrl+C to stop all services"
-    print_info "Or run: ./shed.sh stop"
+    print_info "Or run: ./morphostruct.sh stop"
 
     # Wait for user interrupt
     wait

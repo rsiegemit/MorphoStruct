@@ -1,5 +1,5 @@
 """
-Centralized logging configuration for the SHED backend.
+Centralized logging configuration for the MorphoStruct backend.
 
 Provides structured logging with proper levels, formatting, and handlers.
 """
@@ -72,4 +72,4 @@ def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
 
 
 # Application-wide logger for general use
-app_logger = get_logger("shed.backend", level=logging.INFO)
+app_logger = get_logger("morphostruct.backend", level=logging.INFO)

@@ -867,9 +867,9 @@ def generate_lattice(params: LatticeParams) -> tuple[m3d.Manifold, dict]:
             node_union = batch_union(node_manifolds)
             result = result + node_union
 
-    # Clip to bounding box (intersection, not XOR)
+    # Clip to bounding box (intersection)
     clip_box = m3d.Manifold.cube([bx, by, bz])
-    result = result & clip_box
+    result = m3d.Manifold.batch_boolean([result, clip_box], m3d.OpType.Intersect)
 
     # Calculate statistics
     mesh = result.to_mesh()

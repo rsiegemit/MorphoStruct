@@ -1,6 +1,6 @@
 # Multi-Provider LLM Abstraction
 
-The SHED backend now supports multiple LLM providers through a unified abstraction layer.
+The MorphoStruct backend now supports multiple LLM providers through a unified abstraction layer.
 
 ## Supported Providers
 

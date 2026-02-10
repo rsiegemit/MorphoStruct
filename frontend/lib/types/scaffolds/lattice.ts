@@ -49,7 +49,7 @@ export interface LatticeParams extends BaseParams {
 }
 
 // ============================================================================
-// Advanced Lattice Parameters
+// Lattice Parameters (TPMS and strut-based)
 // ============================================================================
 
 export interface GyroidParams extends BaseParams {

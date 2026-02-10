@@ -500,6 +500,7 @@ def _add_dej_texture(
 
     DEJ has characteristic scalloped interface (25-100 μm convexities).
     This creates small bumps on the crown surface to represent this texture.
+    Bumps are intersected with an expanded shell to ensure they attach to the surface.
 
     Args:
         dentin: Base dentin manifold
@@ -517,12 +518,18 @@ def _add_dej_texture(
     if scallop_size <= 0 or scallop_count <= 0:
         return dentin
 
+    # Create an expanded version of the dentin for intersection testing
+    # This ensures bumps only appear where they touch the actual surface
+    expand_amount = scallop_size * 1.5
+
     scallops = []
 
     # Create scallop bumps around the crown circumference at multiple heights
     height_levels = 3  # Number of vertical levels of scallops
     for level in range(height_levels):
-        z_offset = params.root_length + params.crown_height * (0.3 + 0.5 * level / height_levels)
+        # Calculate z position on the dome surface
+        t = 0.3 + 0.5 * level / height_levels  # 0.3 to 0.8 of crown height
+        z_base = params.root_length
 
         for i in range(scallop_count):
             angle = (2 * np.pi * i) / scallop_count
@@ -530,20 +537,38 @@ def _add_dej_texture(
             angle += rng.random() * params.randomness * 0.2
             size_var = 1.0 + (rng.random() - 0.5) * params.randomness
 
-            # Position on crown surface
-            r = crown_radius * (0.85 + 0.1 * level / height_levels)
-            x = r * np.cos(angle)
-            y = r * np.sin(angle)
+            # Calculate position ON the dome surface (hemisphere scaled to crown height)
+            # For a dome: at angle theta from vertical, r = crown_radius * sin(theta)
+            # and z = crown_height * cos(theta) + root_length
+            theta = np.pi / 2 * (1 - t)  # Map t to angle from top (0) to equator (pi/2)
+            surface_r = crown_radius * np.sin(theta) * 0.98  # Slightly inside surface
+            surface_z = z_base + params.crown_height * np.cos(theta)
 
-            # Create small spherical bump
-            bump = m3d.Manifold.sphere(scallop_size * size_var, max(4, res // 4))
-            bump = bump.translate([x, y, z_offset])
+            x = surface_r * np.cos(angle)
+            y = surface_r * np.sin(angle)
+
+            # Create bump that's large enough to protrude from surface
+            bump_radius = scallop_size * size_var * 2  # Make bumps larger
+            bump = m3d.Manifold.sphere(bump_radius, max(4, res // 4))
+            bump = bump.translate([x, y, surface_z])
             scallops.append(bump)
 
     if scallops:
         scallop_union = batch_union(scallops)
         if scallop_union is not None:
-            dentin = dentin + scallop_union
+            # Intersect bumps with expanded dentin to keep only surface-touching parts
+            expanded_dentin = dentin.scale([
+                1 + expand_amount / crown_radius,
+                1 + expand_amount / crown_radius,
+                1 + expand_amount / (params.tooth_height / 2)
+            ])
+            # Keep only bump portions that overlap with expanded surface
+            surface_bumps = m3d.Manifold.batch_boolean([scallop_union, expanded_dentin], m3d.OpType.Intersect)
+            # Subtract original dentin to get only the protruding parts
+            protruding_bumps = surface_bumps - dentin
+            # Add protruding parts back to dentin
+            if protruding_bumps.volume() > 0:
+                dentin = dentin + protruding_bumps
 
     return dentin
 

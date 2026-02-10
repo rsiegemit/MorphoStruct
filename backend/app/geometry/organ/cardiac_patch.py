@@ -519,9 +519,9 @@ def generate_cardiac_patch(params: CardiacPatchParams) -> tuple[m3d.Manifold, di
 
     result = batch_union(all_fibers)
 
-    # Clip to exact bounding box
+    # Clip to exact bounding box (intersection)
     bbox = m3d.Manifold.cube([px, py, pz]).translate([-px/2, -py/2, 0])
-    result = result ^ bbox
+    result = m3d.Manifold.batch_boolean([result, bbox], m3d.OpType.Intersect)
 
     # Generate pores for porosity
     # Spherical pores distributed throughout the fiber matrix

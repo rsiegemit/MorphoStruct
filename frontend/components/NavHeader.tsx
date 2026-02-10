@@ -6,7 +6,7 @@ import { LogoIcon } from '@/components/Logo';
 import { useAuthStore } from '@/lib/store/authStore';
 import { Settings, User, LogOut, Menu, X } from 'lucide-react';
 
-type PageType = 'dashboard' | 'generator' | 'library' | 'settings' | 'account';
+type PageType = 'dashboard' | 'generator' | 'vision' | 'library' | 'settings' | 'account';
 
 interface NavHeaderProps {
   currentPage: PageType;
@@ -54,6 +54,7 @@ export function NavHeader({ currentPage }: NavHeaderProps) {
   const navLinks = [
     { label: 'DASHBOARD', path: '/dashboard', id: 'dashboard' as PageType },
     { label: 'GENERATOR', path: '/generator', id: 'generator' as PageType },
+    { label: 'VISION', path: '/vision', id: 'vision' as PageType },
     { label: 'LIBRARY', path: '/library', id: 'library' as PageType },
   ];
 

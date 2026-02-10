@@ -9,7 +9,7 @@ import { ExportPanel } from '@/components/export';
 import { useScaffoldStore, useChatStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/store/authStore';
 import { usePreferencesStore } from '@/lib/store/preferencesStore';
-import { generateScaffold, exportSTL, downloadBlob, sendChatMessage } from '@/lib/api';
+import { generateScaffold, exportSTL, downloadBlob, sendChatMessage, saveScaffold } from '@/lib/api';
 import { ScaffoldType } from '@/lib/types/scaffolds';
 import { NavHeader } from '@/components/NavHeader';
 
@@ -60,6 +60,7 @@ export default function GeneratorPage() {
 
   // Export state
   const [isExporting, setIsExporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Get generation timeout from preferences (default 60s)
   const generationTimeout = usePreferencesStore((state) => state.preferences?.generation_timeout_seconds) || 60;
@@ -114,6 +115,18 @@ export default function GeneratorPage() {
       setIsExporting(false);
     }
   }, [scaffoldId, scaffoldType, generationTimeout]);
+
+  // Handle save to library
+  const handleSave = useCallback(async (name: string) => {
+    setIsSaving(true);
+    try {
+      await saveScaffold(name, scaffoldType, params);
+    } catch (error) {
+      console.error('Save failed:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [scaffoldType, params]);
 
   // Handle chat messages
   const handleSendMessage = useCallback(async (message: string) => {
@@ -219,7 +232,9 @@ export default function GeneratorPage() {
               validation={validation}
               stats={stats}
               onExport={handleExport}
+              onSave={handleSave}
               isExporting={isExporting}
+              isSaving={isSaving}
             />
           </div>
         </div>

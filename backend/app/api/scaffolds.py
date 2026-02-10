@@ -960,9 +960,9 @@ def _convert_params_for_generator(scaffold_type: ScaffoldType, params: Dict[str,
             converted["inlet_radius"] = converted.pop("inlet_radius_mm")
         if "rim_height_mm" in converted:
             converted["rim_height"] = converted.pop("rim_height_mm")
-        # Map inner_radius if not specified
-        if "inner_radius" not in converted and "outer_radius" in converted:
-            converted["inner_radius"] = converted["outer_radius"] * 0.94
+        # rim_width is the primary parameter; derive from inner_radius for backward compat
+        if "rim_width" not in converted and "inner_radius" not in converted and "outer_radius" in converted:
+            converted["rim_width"] = converted["outer_radius"] * 0.06  # ~0.3mm for default 4.875
 
     elif scaffold_type == ScaffoldType.TUBULAR_CONDUIT:
         # Handle groove_count for grooved texture
@@ -1515,6 +1515,15 @@ async def generate_scaffold(request: GenerateRequest) -> GenerateResponse:
 
         # Apply inversion if requested (swap solid/void spaces)
         if request.invert:
+            # TPMS surfaces use _MarchingCubesMeshWrapper, not manifold3d.Manifold
+            # Boolean operations are not supported on marching-cubes meshes
+            if not isinstance(manifold, m3d.Manifold):
+                logger.warning(f"Inversion not supported for {request.type} (non-manifold mesh)")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Inversion is not supported for {request.type.value} scaffolds. "
+                           "TPMS surfaces are thin sheets and cannot be inverted.",
+                )
             logger.info("Applying geometry inversion...")
             manifold = _invert_manifold(manifold, padding_mm=1.0)
 
